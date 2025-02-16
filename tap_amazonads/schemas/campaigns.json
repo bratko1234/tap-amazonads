@@ -1,0 +1,215 @@
+{
+    "type": "object",
+    "required": [
+        "campaignId",
+        "name",
+        "lastUpdatedDateTime",
+        "creationDateTime",
+        "state",
+        "deliveryStatus"
+    ],
+    "properties": {
+        "campaignId": {
+            "type": "string",
+            "description": "The unique identifier of the campaign"
+        },
+        "portfolioId": {
+            "type": ["string", "null"],
+            "description": "The portfolio ID associated with the campaign"
+        },
+        "name": {
+            "type": "string",
+            "description": "The name of the campaign"
+        },
+        "startDate": {
+            "type": ["string", "null"],
+            "format": "date",
+            "description": "The start date of the campaign"
+        },
+        "endDate": {
+            "type": ["string", "null"],
+            "format": "date",
+            "description": "The end date of the campaign"
+        },
+        "state": {
+            "type": "string",
+            "enum": ["ENABLED", "PAUSED", "ARCHIVED"],
+            "description": "The state of the campaign"
+        },
+        "brandEntityId": {
+            "type": ["string", "null"],
+            "description": "The brand entity ID associated with the campaign"
+        },
+        "costType": {
+            "type": ["string", "null"],
+            "enum": ["CPC", "VCPM"],
+            "description": "The cost type of the campaign"
+        },
+        "tags": {
+            "type": ["array", "null"],
+            "items": {
+                "type": "object",
+                "properties": {
+                    "key": {
+                        "type": "string",
+                        "description": "The key of the tag"
+                    },
+                    "value": {
+                        "type": "string",
+                        "description": "The value of the tag"
+                    }
+                }
+            }
+        },
+        "targetingSettings": {
+            "type": ["string", "null"],
+            "enum": ["MANUAL", "AUTO"],
+            "description": "The targeting settings of the campaign"
+        },
+        "optimization": {
+            "type": ["array", "null"],
+            "items": {
+                "type": "object",
+                "properties": {
+                    "bidStrategy": {
+                        "type": ["string", "null"],
+                        "description": "The bid strategy of the campaign"
+                    },
+                    "placementBidAdjustments": {
+                        "type": ["array", "null"],
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "placement": {
+                                    "type": "string",
+                                    "description": "The placement type"
+                                },
+                                "percentage": {
+                                    "type": "integer",
+                                    "description": "The adjustment percentage"
+                                }
+                            }
+                        }
+                    },
+                    "shopperSegmentBidAdjustment": {
+                        "type": ["array", "null"],
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "placement": {
+                                    "type": "string",
+                                    "description": "The placement type"
+                                },
+                                "percentage": {
+                                    "type": "integer",
+                                    "description": "The adjustment percentage"
+                                }
+                            }
+                        }
+                    },
+                    "shopperCohortBidAdjustment": {
+                        "type": ["object", "null"],
+                        "properties": {
+                            "shopperCohortType": {
+                                "type": "string",
+                                "enum": ["AUDIENCE_SEGMENT"],
+                                "description": "The type of shopper cohort"
+                            },
+                            "percentage": {
+                                "type": "integer",
+                                "description": "The adjustment percentage"
+                            },
+                            "audienceSegments": {
+                                "type": ["array", "null"],
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "audienceId": {
+                                            "type": "string",
+                                            "description": "The audience ID"
+                                        },
+                                        "audienceSegmentType": {
+                                            "type": "string",
+                                            "enum": ["SPONSORED_ADS_AMC"],
+                                            "description": "The type of audience segment"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "budgetCaps": {
+            "type": ["object", "null"],
+            "properties": {
+                "recurrenceTimePeriod": {
+                    "type": "string",
+                    "enum": ["DAILY", "LIFETIME"],
+                    "description": "The recurrence time period for the budget"
+                },
+                "budgetType": {
+                    "type": "string",
+                    "enum": ["MONETARY"],
+                    "description": "The type of budget"
+                },
+                "budgetValue": {
+                    "type": ["object", "null"],
+                    "properties": {
+                        "monetaryBudget": {
+                            "type": "object",
+                            "properties": {
+                                "currencyCode": {
+                                    "type": "string",
+                                    "enum": ["USD", "GBP", "EUR", "JPY", "CAD", "AUD"],
+                                    "description": "The currency code"
+                                },
+                                "amount": {
+                                    "type": "number",
+                                    "description": "The budget amount"
+                                },
+                                "ruleAmount": {
+                                    "type": ["number", "null"],
+                                    "description": "The rule amount"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "creationDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The creation date and time of the campaign"
+        },
+        "lastUpdatedDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The last update date and time of the campaign"
+        },
+        "deliveryStatus": {
+            "type": "string",
+            "enum": ["DELIVERING", "NOT_DELIVERING"],
+            "description": "The delivery status of the campaign"
+        },
+        "deliveryReasons": {
+            "type": ["array", "null"],
+            "items": {
+                "type": "string",
+                "enum": [
+                    "CAMPAIGN_PENDING_START_DATE",
+                    "CAMPAIGN_INCOMPLETE",
+                    "CAMPAIGN_PAUSED",
+                    "CAMPAIGN_ARCHIVED",
+                    "CAMPAIGN_END_DATE_REACHED",
+                    "CAMPAIGN_OUT_OF_BUDGET",
+                    "CAMPAIGN_PENDING_REVIEW",
+                    "CAMPAIGN_REJECTED"
+                ],
+                "description": "The reasons for the delivery status"
+            }
+        }
+    }
+} 

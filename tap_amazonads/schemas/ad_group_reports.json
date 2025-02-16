@@ -1,0 +1,154 @@
+{
+    "type": "object",
+    "properties": {
+        "date": {
+            "type": ["string", "null"],
+            "format": "date",
+            "description": "The date of the report data"
+        },
+        "startDate": {
+            "type": ["string", "null"],
+            "format": "date",
+            "description": "The start date of the report period"
+        },
+        "endDate": {
+            "type": ["string", "null"],
+            "format": "date",
+            "description": "The end date of the report period"
+        },
+        "campaignId": {
+            "type": ["string", "null"],
+            "description": "The unique identifier of the campaign"
+        },
+        "campaignName": {
+            "type": ["string", "null"],
+            "description": "The name of the campaign"
+        },
+        "campaignStatus": {
+            "type": ["string", "null"],
+            "enum": ["ENABLED", "PAUSED", "ARCHIVED"],
+            "description": "The status of the campaign"
+        },
+        "adGroupId": {
+            "type": ["string", "null"],
+            "description": "The unique identifier of the ad group"
+        },
+        "adGroupName": {
+            "type": ["string", "null"],
+            "description": "The name of the ad group"
+        },
+        "adStatus": {
+            "type": ["string", "null"],
+            "enum": ["ENABLED", "PAUSED", "ARCHIVED"],
+            "description": "The status of the ad group"
+        },
+        "impressions": {
+            "type": ["integer", "null"],
+            "description": "Number of times your ads were shown"
+        },
+        "clicks": {
+            "type": ["integer", "null"],
+            "description": "Number of clicks on your ads"
+        },
+        "cost": {
+            "type": ["number", "null"],
+            "description": "Total cost of advertising (spend)"
+        },
+        "addToCart": {
+            "type": ["integer", "null"],
+            "description": "Number of add to cart actions"
+        },
+        "addToCartClicks": {
+            "type": ["integer", "null"],
+            "description": "Number of add to cart actions from clicks"
+        },
+        "addToCartRate": {
+            "type": ["number", "null"],
+            "description": "Rate of add to cart actions"
+        },
+        "addToList": {
+            "type": ["integer", "null"],
+            "description": "Number of add to list actions"
+        },
+        "addToListFromClicks": {
+            "type": ["integer", "null"],
+            "description": "Number of add to list actions from clicks"
+        },
+        "qualifiedBorrows": {
+            "type": ["integer", "null"],
+            "description": "Number of qualified borrows"
+        },
+        "qualifiedBorrowsFromClicks": {
+            "type": ["integer", "null"],
+            "description": "Number of qualified borrows from clicks"
+        },
+        "royaltyQualifiedBorrows": {
+            "type": ["integer", "null"],
+            "description": "Number of royalty qualified borrows"
+        },
+        "royaltyQualifiedBorrowsFromClicks": {
+            "type": ["integer", "null"],
+            "description": "Number of royalty qualified borrows from clicks"
+        },
+        "brandedSearches": {
+            "type": ["integer", "null"],
+            "description": "Number of branded searches"
+        },
+        "brandedSearchesClicks": {
+            "type": ["integer", "null"],
+            "description": "Number of branded searches from clicks"
+        },
+        "purchases": {
+            "type": ["integer", "null"],
+            "description": "Number of purchases"
+        },
+        "purchasesClicks": {
+            "type": ["integer", "null"],
+            "description": "Number of purchases from clicks"
+        },
+        "sales": {
+            "type": ["number", "null"],
+            "description": "Total sales value"
+        },
+        "salesClicks": {
+            "type": ["number", "null"],
+            "description": "Sales value from clicks"
+        },
+        "unitsSold": {
+            "type": ["integer", "null"],
+            "description": "Number of units sold"
+        },
+        "unitsSoldClicks": {
+            "type": ["integer", "null"],
+            "description": "Number of units sold from clicks"
+        },
+        "newToBrandPurchases": {
+            "type": ["integer", "null"],
+            "description": "Number of new-to-brand purchases"
+        },
+        "newToBrandSales": {
+            "type": ["number", "null"],
+            "description": "Sales value from new-to-brand purchases"
+        },
+        "newToBrandUnitsSold": {
+            "type": ["integer", "null"],
+            "description": "Units sold to new-to-brand customers"
+        },
+        "reportTypeId": {
+            "type": ["string", "null"],
+            "enum": ["sbAdGroup", "sdAdGroup"],
+            "description": "The type of report"
+        },
+        "timeUnit": {
+            "type": ["string", "null"],
+            "enum": ["SUMMARY", "DAILY"],
+            "description": "The time unit for the report data"
+        }
+    },
+    "required": [
+        "campaignId",
+        "adGroupId",
+        "date",
+        "cost"
+    ]
+} 

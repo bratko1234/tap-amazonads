@@ -1,0 +1,179 @@
+{
+    "type": "object",
+    "required": [
+        "targetId",
+        "adProduct",
+        "state",
+        "negative",
+        "deliveryStatus",
+        "creationDateTime",
+        "lastUpdatedDateTime",
+        "targetType"
+    ],
+    "properties": {
+        "targetId": {
+            "type": "string",
+            "description": "The unique identifier of the target"
+        },
+        "adGroupId": {
+            "type": ["string", "null"],
+            "description": "The unique identifier of the ad group that the target belongs to"
+        },
+        "campaignId": {
+            "type": ["string", "null"],
+            "description": "The campaignId associated to the target (for campaign-level targets only)"
+        },
+        "adProduct": {
+            "type": "string",
+            "enum": ["SPONSORED_PRODUCTS", "SPONSORED_BRANDS", "SPONSORED_DISPLAY"],
+            "description": "The ad product that the target belongs to"
+        },
+        "state": {
+            "type": "string",
+            "enum": ["ENABLED", "PAUSED", "ARCHIVED", "OTHER"],
+            "description": "The user set state of the target"
+        },
+        "negative": {
+            "type": "boolean",
+            "description": "Whether to target (false) or exclude (true) the given target"
+        },
+        "deliveryStatus": {
+            "type": "string",
+            "enum": ["DELIVERING", "NOT_DELIVERING", "UNAVAILABLE"],
+            "description": "This is an overall status if the target is delivering or not"
+        },
+        "deliveryReasons": {
+            "type": ["array", "null"],
+            "items": {
+                "type": "string",
+                "enum": [
+                    "TARGET_POLICING_SUSPENDED", "TARGET_PAUSED", "TARGET_ARCHIVED",
+                    "TARGET_BLOCKED", "OTHER"
+                ]
+            },
+            "description": "This is a list of reasons why the target is not delivering"
+        },
+        "creationDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The date time that the target was created"
+        },
+        "lastUpdatedDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The date time that the target was last updated"
+        },
+        "bid": {
+            "type": ["object", "null"],
+            "properties": {
+                "bid": {
+                    "type": ["number", "null"],
+                    "description": "The bid applied to the target"
+                },
+                "currencyCode": {
+                    "type": ["string", "null"],
+                    "enum": ["AED", "AUD", "BRL", "CAD", "CHF", "CNY", "DKK", "EUR", "GBP", "INR", "JPY", "MXN", "NOK", "SAR", "SEK", "SGD", "TRY", "USD"],
+                    "description": "The currency code of the bid applied to the target"
+                }
+            }
+        },
+        "targetType": {
+            "type": "string",
+            "enum": ["AUTO", "KEYWORD", "PRODUCT_CATEGORY", "PRODUCT", "PRODUCT_CATEGORY_AUDIENCE", "PRODUCT_AUDIENCE", "AUDIENCE"],
+            "description": "The type of target"
+        },
+        "targetDetails": {
+            "type": ["object", "null"],
+            "properties": {
+                "matchType": {
+                    "type": ["string", "null"],
+                    "enum": [
+                        "SEARCH_LOOSE_MATCH", "SEARCH_CLOSE_MATCH", "PRODUCT_SUBSTITUTES",
+                        "PRODUCT_COMPLEMENTS", "PRODUCT_SIMILAR", "SEARCH_RELATED_TO_YOUR_BRAND",
+                        "SEARCH_RELATED_TO_YOUR_LANDING_PAGES", "BROAD", "PHRASE", "EXACT",
+                        "PRODUCT_EXACT", "PRODUCT_SIMILAR", "KEYWORDS_RELATED_TO_YOUR_BRAND",
+                        "KEYWORDS_RELATED_TO_GIFTS", "KEYWORDS_RELATED_TO_YOUR_PRODUCT_CATEGORY"
+                    ],
+                    "description": "The match type associated with the target"
+                },
+                "keyword": {
+                    "type": ["string", "null"],
+                    "description": "The keyword text to target"
+                },
+                "nativeLanguageKeyword": {
+                    "type": ["string", "null"],
+                    "description": "The unlocalized keyword text in the preferred locale of the advertiser"
+                },
+                "nativeLanguageLocale": {
+                    "type": ["string", "null"],
+                    "description": "The locale preference of the advertiser"
+                },
+                "productCategoryId": {
+                    "type": ["string", "null"],
+                    "description": "The product category to target"
+                },
+                "productCategoryResolved": {
+                    "type": ["string", "null"],
+                    "description": "The resolved human readable name of the category"
+                },
+                "productBrand": {
+                    "type": ["string", "null"],
+                    "description": "Refinement to target a specific brand within the product category"
+                },
+                "productBrandResolved": {
+                    "type": ["string", "null"],
+                    "description": "The resolved human readable name of the brand"
+                },
+                "productGenre": {
+                    "type": ["string", "null"],
+                    "description": "Refinement to target a specific product genre within the product category"
+                },
+                "productPriceLessThan": {
+                    "type": ["string", "null"],
+                    "description": "Refinement to target products with a price less than the value"
+                },
+                "productPriceGreaterThan": {
+                    "type": ["string", "null"],
+                    "description": "Refinement to target products with a price greater than the value"
+                },
+                "productRatingLessThan": {
+                    "type": ["string", "null"],
+                    "description": "Refinement to target products with a rating less than the value"
+                },
+                "productRatingGreaterThan": {
+                    "type": ["string", "null"],
+                    "description": "Refinement to target products with a rating greater than the value"
+                },
+                "productAgeRange": {
+                    "type": ["string", "null"],
+                    "description": "Refinement to target products for a specific age range"
+                },
+                "productAgeRangeResolved": {
+                    "type": ["string", "null"],
+                    "description": "The resolved product age range to target"
+                },
+                "productPrimeShippingEligible": {
+                    "type": ["boolean", "null"],
+                    "description": "Refinement to target products that are prime shipping eligible"
+                },
+                "asin": {
+                    "type": ["string", "null"],
+                    "description": "The product asin to target"
+                },
+                "event": {
+                    "type": ["string", "null"],
+                    "enum": ["PURCHASE", "VIEW"],
+                    "description": "The product based event to target the audience"
+                },
+                "lookback": {
+                    "type": ["integer", "null"],
+                    "description": "The lookback period in days to target the audience"
+                },
+                "audienceId": {
+                    "type": ["string", "null"],
+                    "description": "An audience identifier retrieved from the audiences/list resource"
+                }
+            }
+        }
+    }
+} 

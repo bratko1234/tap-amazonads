@@ -1,0 +1,109 @@
+{
+    "type": "object",
+    "required": [
+        "adGroupId",
+        "campaignId",
+        "adProduct",
+        "name",
+        "state",
+        "deliveryStatus",
+        "creationDateTime",
+        "lastUpdatedDateTime",
+        "bid"
+    ],
+    "properties": {
+        "adGroupId": {
+            "type": "string",
+            "description": "The unique identifier of the ad group"
+        },
+        "campaignId": {
+            "type": "string",
+            "description": "The unique identifier of the campaign the ad group belongs to"
+        },
+        "adProduct": {
+            "type": "string",
+            "enum": ["SPONSORED_PRODUCTS", "SPONSORED_BRANDS", "SPONSORED_DISPLAY"],
+            "description": "The ad product that the ad group belongs to"
+        },
+        "name": {
+            "type": "string",
+            "description": "The name of the ad group"
+        },
+        "state": {
+            "type": "string",
+            "enum": ["ENABLED", "PAUSED", "ARCHIVED", "OTHER"],
+            "description": "The user-set state of the ad group"
+        },
+        "deliveryStatus": {
+            "type": "string",
+            "enum": ["DELIVERING", "NOT_DELIVERING", "UNAVAILABLE"],
+            "description": "This is an overall status if the ad group is delivering or not"
+        },
+        "deliveryReasons": {
+            "type": ["array", "null"],
+            "items": {
+                "type": "string",
+                "enum": [
+                    "CAMPAIGN_PAUSED", "CAMPAIGN_ARCHIVED", "CAMPAIGN_PENDING_START_DATE",
+                    "CAMPAIGN_END_DATE_REACHED", "CAMPAIGN_REJECTED", "CAMPAIGN_PENDING_REVIEW",
+                    "CAMPAIGN_INCOMPLETE", "CAMPAIGN_OUT_OF_BUDGET", "AD_GROUP_PAUSED",
+                    "AD_GROUP_ARCHIVED", "AD_GROUP_INCOMPLETE", "AD_GROUP_POLICING_PENDING_REVIEW",
+                    "AD_GROUP_LOW_BID", "AD_GROUP_PENDING_REVIEW", "AD_GROUP_REJECTED", "OTHER"
+                ]
+            },
+            "description": "This is a list of reasons why the ad group is not delivering"
+        },
+        "creativeType": {
+            "type": ["string", "null"],
+            "description": "The creative type that this ad group contains"
+        },
+        "creationDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The date time that the ad group was created"
+        },
+        "lastUpdatedDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The date time that the ad group was last updated"
+        },
+        "bid": {
+            "type": "object",
+            "required": [
+                "defaultBid",
+                "currencyCode"
+            ],
+            "properties": {
+                "defaultBid": {
+                    "type": "number",
+                    "description": "The default maximum bid for ads and targets in the ad group"
+                },
+                "currencyCode": {
+                    "type": "string",
+                    "enum": ["AED", "AUD", "BRL", "CAD", "CHF", "CNY", "DKK", "EUR", "GBP", "INR", "JPY", "MXN", "NOK", "SAR", "SEK", "SGD", "TRY", "USD"],
+                    "description": "The currency code the bid is expressed in"
+                }
+            }
+        },
+        "optimization": {
+            "type": ["object", "null"],
+            "properties": {
+                "goalSetting": {
+                    "type": ["object", "null"],
+                    "properties": {
+                        "goal": {
+                            "type": ["string", "null"],
+                            "enum": ["AWARENESS", "CONSIDERATION", "CONVERSIONS"],
+                            "description": "The type of goal associated with the ad group"
+                        },
+                        "kpi": {
+                            "type": ["string", "null"],
+                            "enum": ["CLICKS"],
+                            "description": "The way the goal associated with the ad group is measured"
+                        }
+                    }
+                }
+            }
+        }
+    }
+} 

@@ -1,0 +1,10 @@
+{
+    "client_id": "amzn1.application-oa2-client.a8626565db714f28a6a9db0f23b507e3",
+    "client_secret": "amzn1.oa2-cs.v1.8dde723f77e2379be8e4e5b58a3957f8f8f70fc51fa7e12db74825a2b29e396d",
+    "refresh_token": "Atzr|IwEBIKDH9zlLLL9t8Rv9VI9LC9MaZvLm0eZ5bEHEeV645ZsX3AgOKJLYb6ZFNwhY19QpbEs2Rqn-dQgzhU8uvW8WFfs3IdBF5yvXgkCYe1hqvx9bK39gxvJh1NHeX2GelxjXtzqfqyXrcNDDqXxkhJMqxJGiY9S1mAz6xvMd-kBHBbCAHCViwyVtrQdsBEu5cwfFlc2wcx18_d3_fAakUAhQJjcGlg3gxF0kQ3lbnOhXv9ubddZmulIZBQb7RucFzj1mR8ommkHQIONu0aSM5yAzYAtnY9uNyaoZpd7veXiUEtB3iv4Bat7UPpDh-kToXxaElfJA_C0Pt3uaf1ElHx1wUAesaT6VNVmYdzydG6JZNdlE_g2BjujMcVed72tfpbljGPBSOaVgBqtOqmDyr00xEAzxPZwP6gcAIdiZnzTUG9R9bwxO6vEFCsXpCJBkpfER5YmarZXBgZwi6unJNZN7Q79inRDLufRCvM2laHEc2pqaGA",
+    "profile_id": "1366207205083107",
+    "region": "NA",
+    "start_date": "2024-02-09",
+    "user_agent": "tap-amazonads-test",
+    "page_size": 100
+} 

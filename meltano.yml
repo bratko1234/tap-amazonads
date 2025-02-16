@@ -1,0 +1,64 @@
+version: 1
+send_anonymous_usage_stats: true
+project_id: "tap-amazonads"
+default_environment: test
+environments:
+- name: test
+plugins:
+  extractors:
+  - name: "tap-amazonads"
+    namespace: "tap_amazonads"
+    pip_url: -e .
+    capabilities:
+    - state
+    - catalog
+    - discover
+    - about
+    - stream-maps
+
+    # TODO: Declare settings and their types here:
+    settings:
+    - name: client_id
+      kind: password
+      env: TAP_AMAZONADS_CLIENT_ID
+      value: "${TAP_AMAZONADS_CLIENT_ID}"
+    - name: client_secret
+      kind: password
+      env: TAP_AMAZONADS_CLIENT_SECRET
+      value: "${TAP_AMAZONADS_CLIENT_SECRET}"
+    - name: refresh_token
+      kind: password
+      env: TAP_AMAZONADS_REFRESH_TOKEN
+      value: "${TAP_AMAZONADS_REFRESH_TOKEN}"
+    - name: profile_id
+      kind: password
+      env: TAP_AMAZONADS_PROFILE_ID
+      value: "${TAP_AMAZONADS_PROFILE_ID}"
+    - name: region
+      value: "NA"
+    - name: start_date
+      value: "2024-02-09"
+    - name: user_agent
+      value: "tap-amazonads-test"
+    - name: page_size
+      value: 100
+
+    # TODO: Declare required settings here:
+    settings_group_validation:
+    - [client_id, client_secret, refresh_token, profile_id]
+
+    # TODO: Declare default configuration values here:
+    config:
+      client_id: "${TAP_AMAZONADS_CLIENT_ID}"
+      client_secret: "${TAP_AMAZONADS_CLIENT_SECRET}"
+      refresh_token: "${TAP_AMAZONADS_REFRESH_TOKEN}"
+      profile_id: "${TAP_AMAZONADS_PROFILE_ID}"
+      region: "NA"
+      start_date: "2024-02-09"
+      user_agent: "tap-amazonads-test"
+      page_size: 100
+
+  loaders:
+  - name: target-jsonl
+    variant: andyh1203
+    pip_url: target-jsonl
