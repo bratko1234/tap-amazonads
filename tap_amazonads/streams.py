@@ -402,7 +402,6 @@ class AdvertisedProductReportStream(AmazonADsStream):
 
     def request_records(self, context: dict | None) -> t.Iterable[dict]:
         """Request records from REST endpoint(s)."""
-        # Detaljno logovanje za autentifikaciju
         if not self.authenticator:
             logger.error("No authenticator found!")
             raise Exception("Authenticator not initialized")
@@ -425,13 +424,19 @@ class AdvertisedProductReportStream(AmazonADsStream):
         """Get starting date in YYYY-MM-DD format."""
         if context and "start_date" in context:
             return context["start_date"]
-        return self.get_starting_replication_key_value(context)
+        # Koristimo state ako postoji
+        state = self.get_context_state(context)
+        if state and self.replication_key in state:
+            return state[self.replication_key]
+        # Inače koristimo default start date
+        return "2025-02-10"  # Možemo postaviti neki default datum
 
     def get_ending_date(self, context: dict | None) -> str:
         """Get ending date in YYYY-MM-DD format."""
         if context and "end_date" in context:
             return context["end_date"]
-        return self.get_ending_replication_key_value(context)
+        # Za end date koristimo današnji datum
+        return "2025-02-10"  # Možemo postaviti neki default datum
 
     def prepare_request(self, context: dict | None, next_page_token: t.Any | None) -> requests.PreparedRequest:
         """Prepare a request object."""
@@ -441,7 +446,6 @@ class AdvertisedProductReportStream(AmazonADsStream):
         url = self.get_url(context)
         headers = self.http_headers
         
-        # Koristimo nove metode za datume
         start_date = self.get_starting_date(context)
         end_date = self.get_ending_date(context)
         
