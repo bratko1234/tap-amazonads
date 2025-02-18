@@ -7,6 +7,7 @@ from pathlib import Path
 from singer_sdk import typing as th
 import requests
 import logging
+import time
 
 from tap_amazonads.client import AmazonADsStream
 
@@ -402,23 +403,57 @@ class AdvertisedProductReportStream(AmazonADsStream):
 
     def request_records(self, context: dict | None) -> t.Iterable[dict]:
         """Request records from REST endpoint(s)."""
-        if not self.authenticator:
-            logger.error("No authenticator found!")
-            raise Exception("Authenticator not initialized")
-            
-        if not hasattr(self.authenticator, 'access_token'):
-            logger.error(f"Authenticator type: {type(self.authenticator)}")
-            logger.error(f"Authenticator attributes: {dir(self.authenticator)}")
-            raise Exception("Authenticator has no access_token attribute")
-            
-        access_token = self.authenticator.access_token
-        if not access_token:
-            logger.error("No access token available")
-            raise Exception("Access token not available")
-            
-        logger.info("Authentication check passed, proceeding with request")
+        # Autentifikacijske provjere...
         
-        return super().request_records(context)
+        # 1. Kreiramo report request
+        logger.info("Creating report request...")
+        prepared_request = self.prepare_request(context, None)
+        response = self._request(prepared_request, context)
+        
+        if response.status_code != 200:
+            raise Exception(f"Report request failed: {response.text}")
+            
+        report_info = response.json()
+        logger.info(f"Report request response: {report_info}")
+        
+        report_id = report_info.get("reportId")
+        if not report_id:
+            raise Exception("No reportId in response")
+            
+        # 2. Čekamo da report bude spreman
+        while True:
+            logger.info(f"Checking status for report {report_id}")
+            status_url = f"{self.path}/{report_id}"
+            
+            status_request = requests.Request(
+                method="GET",
+                url=self.get_url(context) + f"/{report_id}",
+                headers=self.http_headers
+            ).prepare()
+            
+            status_response = self._request(status_request, context)
+            status_info = status_response.json()
+            
+            logger.info(f"Report status: {status_info.get('status')}")
+            
+            if status_info.get('status') == 'COMPLETED':
+                # Report je spreman, preuzimamo ga
+                if not status_info.get('url'):
+                    raise Exception("No download URL in completed report")
+                    
+                # TODO: Implementirati preuzimanje i parsiranje GZIP JSON-a
+                # Za sada samo logiramo URL
+                logger.info(f"Report ready at URL: {status_info['url']}")
+                break
+                
+            elif status_info.get('status') == 'FAILED':
+                raise Exception(f"Report generation failed: {status_info.get('failureReason')}")
+                
+            # Čekamo prije sljedećeg pokušaja
+            time.sleep(5)
+            
+        # TODO: Implementirati preuzimanje i parsiranje reporta
+        yield from []  # Privremeno vraćamo prazan iterator
 
     def get_starting_date(self, context: dict | None) -> str:
         """Get starting date in YYYY-MM-DD format."""
