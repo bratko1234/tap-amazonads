@@ -403,23 +403,20 @@ class AdvertisedProductReportStream(AmazonADsStream):
         access_token = self.authenticator.access_token
         if not access_token:
             raise Exception("No access token available")
-
-        logger.info(f"Access token type: {type(access_token)}")
-        logger.info(f"Access token length: {len(access_token)}")
+        
+        # Log actual token for debugging
+        logger.info(f"Access token: {access_token}")
         
         headers = {
             "Content-Type": "application/vnd.createasyncreportrequest.v3+json",
             "Accept": "application/vnd.createasyncreportrequest.v3+json",
             "Amazon-Advertising-API-ClientId": self.config.get("client_id"),
             "Amazon-Advertising-API-Scope": self.config.get("profile_id"),
-            "Authorization": "Bearer " + access_token  # Eksplicitno odvajamo "Bearer" i token
+            "Authorization": "Bearer " + access_token
         }
         
-        # Log headers (maskiranje sensitive podataka)
-        safe_headers = headers.copy()
-        if 'Authorization' in safe_headers:
-            safe_headers['Authorization'] = safe_headers['Authorization'][:20] + '...'
-        logger.info(f"Request headers: {safe_headers}")
+        # Log complete headers
+        logger.info(f"Complete headers: {headers}")
         
         return headers
 
