@@ -395,17 +395,32 @@ class AdvertisedProductReportStream(AmazonADsStream):
     schema_filepath = SCHEMAS_DIR / "advertised_product_reports.json"
     method = "POST"  # Eksplicitno postavljamo POST metodu
     
-    def _request(self, prepared_request, context: dict | None = None) -> requests.Response:
-        """Execute a prepared_request and return the response."""
-        # Log complete request details
-        logger.info("====== REQUEST DETAILS ======")
-        logger.info(f"URL: {prepared_request.url}")
-        logger.info(f"Method: {prepared_request.method}")
-        logger.info(f"Headers: {prepared_request.headers}")
-        logger.info(f"Body: {prepared_request.body}")
-        logger.info("===========================")
+    def __init__(self, *args, **kwargs):
+        """Initialize the stream."""
+        super().__init__(*args, **kwargs)
+        logger.info(f"Stream initialized with authenticator: {self.authenticator}")
+
+    def request_records(self, context: dict | None) -> t.Iterable[dict]:
+        """Request records from REST endpoint(s)."""
+        # Dodajemo provjere
+        if not self.authenticator:
+            logger.error("No authenticator found!")
+            raise Exception("Authenticator not initialized")
+            
+        if not hasattr(self.authenticator, 'access_token'):
+            logger.error(f"Authenticator type: {type(self.authenticator)}")
+            logger.error(f"Authenticator attributes: {dir(self.authenticator)}")
+            raise Exception("Authenticator has no access_token attribute")
+            
+        access_token = self.authenticator.access_token
+        if not access_token:
+            logger.error("No access token available")
+            raise Exception("Access token not available")
+            
+        logger.info("Authentication check passed, proceeding with request")
         
-        return super()._request(prepared_request, context)
+        # Nastavljamo s originalnom implementacijom
+        return super().request_records(context)
 
     @property
     def http_headers(self) -> dict:
