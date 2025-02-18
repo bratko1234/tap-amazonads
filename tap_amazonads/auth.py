@@ -37,7 +37,7 @@ class AmazonADsAuthenticator(OAuthAuthenticator, metaclass=SingletonMeta):
         """
         return cls(
             stream=stream,
-            auth_endpoint="https://api.amazon.co.jp/auth/o2/token",
+            auth_endpoint="https://api.amazon.com/auth/o2/token",
             oauth_scopes="advertising::campaign_management"
         )
 
