@@ -489,7 +489,6 @@ class GrossAndInvalidTrafficReportStream(AmazonADsStream):
     primary_keys = ["campaignId", "date"]
     replication_key = "date"
     schema_filepath = SCHEMAS_DIR / "gross_and_invalid_traffic_reports.json"
-    parent_stream_type = CampaignsStream
     method = "POST"
     records_jsonpath = "$.rows[*]"
     
