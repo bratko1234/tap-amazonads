@@ -399,14 +399,11 @@ class AdvertisedProductReportStream(AmazonADsStream):
     @property
     def http_headers(self) -> dict:
         """Return the http headers needed."""
-        # Prvo dohvatimo access token
         access_token = self.authenticator.access_token
         if not access_token:
             raise Exception("No access token available")
         
-        # Log actual token for debugging
-        logger.info(f"Access token: {access_token}")
-        
+        # Samo potrebni headeri, točno kao u Postmanu
         headers = {
             "Content-Type": "application/vnd.createasyncreportrequest.v3+json",
             "Accept": "application/vnd.createasyncreportrequest.v3+json",
@@ -415,8 +412,10 @@ class AdvertisedProductReportStream(AmazonADsStream):
             "Authorization": "Bearer " + access_token
         }
         
-        # Log complete headers
-        logger.info(f"Complete headers: {headers}")
+        # Log headers (maskiramo token)
+        safe_headers = headers.copy()
+        safe_headers['Authorization'] = safe_headers['Authorization'][:20] + '...'
+        logger.info(f"Request headers: {safe_headers}")
         
         return headers
 
