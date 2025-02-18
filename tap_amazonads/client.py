@@ -13,6 +13,8 @@ from singer_sdk.helpers.jsonpath import extract_jsonpath
 from singer_sdk.pagination import BaseAPIPaginator
 from singer_sdk.streams import RESTStream
 from singer_sdk.exceptions import FatalAPIError, RetriableAPIError
+import gzip
+import json
 
 from tap_amazonads.auth import AmazonADsAuthenticator
 
@@ -206,9 +208,12 @@ class AmazonADsStream(RESTStream):
             Each record from the source.
         """
         try:
-            data = response.json(parse_float=decimal.Decimal)
+            if response.headers.get("Content-Encoding") == "gzip":
+                data = json.loads(gzip.decompress(response.content).decode())
+            else:
+                data = response.json(parse_float=decimal.Decimal)
         except Exception as e:
-            msg = f"Failed to parse response as JSON: {str(e)}"
+            msg = f"Failed to parse response: {str(e)}"
             raise FatalAPIError(msg) from e
 
         yield from extract_jsonpath(self.records_jsonpath, data)

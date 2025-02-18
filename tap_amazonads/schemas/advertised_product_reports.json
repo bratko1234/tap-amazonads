@@ -22,13 +22,13 @@
             "type": ["string", "null"],
             "description": "The name of the ad group"
         },
-        "asin": {
+        "advertisedAsin": {
             "type": ["string", "null"],
-            "description": "The Amazon Standard Identification Number"
+            "description": "The Amazon Standard Identification Number of the advertised product"
         },
-        "sku": {
+        "advertisedSku": {
             "type": ["string", "null"],
-            "description": "The Stock Keeping Unit"
+            "description": "The Stock Keeping Unit of the advertised product"
         },
         "impressions": {
             "type": ["integer", "null"],
@@ -42,22 +42,22 @@
             "type": ["number", "null"],
             "description": "Total cost of advertising"
         },
-        "attributedConversions14d": {
+        "purchases14d": {
             "type": ["integer", "null"],
-            "description": "Number of conversions within 14 days"
+            "description": "Number of purchases within 14 days"
         },
-        "attributedSales14d": {
+        "sales14d": {
             "type": ["number", "null"],
             "description": "Total sales value within 14 days"
         },
-        "attributedUnitsOrdered14d": {
+        "unitsSoldClicks14d": {
             "type": ["integer", "null"],
-            "description": "Number of units ordered within 14 days"
+            "description": "Number of units sold from clicks within 14 days"
         }
     },
     "required": [
         "date",
         "campaignId",
-        "asin"
+        "advertisedAsin"
     ]
 }

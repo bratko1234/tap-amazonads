@@ -402,10 +402,9 @@ class AdvertisedProductReportStream(AmazonADsStream):
     
     name = "advertised_product_reports"
     path = "/reporting/reports"
-    primary_keys = ["campaignId", "date", "asin"]
+    primary_keys = ["campaignId", "date", "advertisedAsin"]  # Changed from asin to advertisedAsin
     replication_key = "date"
     schema_filepath = SCHEMAS_DIR / "advertised_product_reports.json"
-    #parent_stream_type = CampaignsStream
     method = "POST"
     records_jsonpath = "$.rows[*]"
     
@@ -413,8 +412,8 @@ class AdvertisedProductReportStream(AmazonADsStream):
     def http_headers(self) -> dict:
         """Return the http headers needed."""
         headers = {
-            "Content-Type": "application/vnd.createasyncreport.v3+json",
-            "Accept": "application/vnd.createasyncreport.v3+json",
+            "Content-Type": "application/vnd.createasyncreportrequest.v3+json",  # Updated content type
+            "Accept": "application/vnd.createasyncreportrequest.v3+json",
         }
         if "user_agent" in self.config:
             headers["User-Agent"] = self.config.get("user_agent")
@@ -423,12 +422,18 @@ class AdvertisedProductReportStream(AmazonADsStream):
     def get_request_body(self, context: dict | None, next_page_token: t.Any | None) -> dict:
         """Return a dictionary to be sent in the request body."""
         return {
-            "reportType": "advertisedProduct",
+            "name": f"SP advertised product report {self.get_starting_timestamp(context)}-{self.get_ending_timestamp(context)}",
+            "reportTypeId": "spAdvertisedProduct",  # Added reportTypeId
             "configuration": {
                 "adProduct": "SPONSORED_PRODUCTS",
-                "groupBy": ["asin", "campaignId", "adGroupId"],
+                "groupBy": ["advertiser"],  # Updated groupBy
                 "timeUnit": "DAILY",
-                "format": "JSON"
+                "format": "GZIP_JSON",  # Updated format
+                "columns": [
+                    "date", "campaignName", "campaignId", "adGroupName", "adGroupId",
+                    "advertisedAsin", "advertisedSku", "impressions", "clicks", "cost",
+                    "purchases14d", "sales14d", "unitsSoldClicks14d"
+                ]
             },
             "startDate": self.get_starting_timestamp(context),
             "endDate": self.get_ending_timestamp(context)
