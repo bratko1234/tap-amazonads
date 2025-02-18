@@ -393,7 +393,7 @@ class AdvertisedProductReportStream(AmazonADsStream):
     primary_keys = ["campaignId", "date", "advertisedAsin"]
     replication_key = "date"
     schema_filepath = SCHEMAS_DIR / "advertised_product_reports.json"
-    method = "POST"  # Eksplicitno postavljamo POST metodu
+    method = "POST"
     
     def __init__(self, *args, **kwargs):
         """Initialize the stream."""
@@ -402,7 +402,7 @@ class AdvertisedProductReportStream(AmazonADsStream):
 
     def request_records(self, context: dict | None) -> t.Iterable[dict]:
         """Request records from REST endpoint(s)."""
-        # Dodajemo provjere
+        # Detaljno logovanje za autentifikaciju
         if not self.authenticator:
             logger.error("No authenticator found!")
             raise Exception("Authenticator not initialized")
@@ -419,35 +419,38 @@ class AdvertisedProductReportStream(AmazonADsStream):
             
         logger.info("Authentication check passed, proceeding with request")
         
-        # Nastavljamo s originalnom implementacijom
         return super().request_records(context)
 
-    @property
-    def http_headers(self) -> dict:
-        """Return the http headers needed."""
-        headers = super().http_headers
-        headers.update({
-            "Content-Type": "application/vnd.createasyncreportrequest.v3+json",
-            "Accept": "application/vnd.createasyncreportrequest.v3+json",
-        })
-        return headers
+    def get_starting_date(self, context: dict | None) -> str:
+        """Get starting date in YYYY-MM-DD format."""
+        if context and "start_date" in context:
+            return context["start_date"]
+        return self.get_starting_replication_key_value(context)
+
+    def get_ending_date(self, context: dict | None) -> str:
+        """Get ending date in YYYY-MM-DD format."""
+        if context and "end_date" in context:
+            return context["end_date"]
+        return self.get_ending_replication_key_value(context)
 
     def prepare_request(self, context: dict | None, next_page_token: t.Any | None) -> requests.PreparedRequest:
-        """Prepare a request object.
+        """Prepare a request object."""
+        logger.info("Preparing request for advertised_product_reports")
         
-        Args:
-            context: Stream context dictionary
-            next_page_token: Token, page number or any request argument to request the
-                next page of data.
-        """
         http_method = self.method
         url = self.get_url(context)
         headers = self.http_headers
         
+        # Koristimo nove metode za datume
+        start_date = self.get_starting_date(context)
+        end_date = self.get_ending_date(context)
+        
+        logger.info(f"Date range: {start_date} to {end_date}")
+        
         body = {
-            "name": f"SP advertised product report {self.get_starting_timestamp(context)}-{self.get_ending_timestamp(context)}",
-            "startDate": self.get_starting_timestamp(context),
-            "endDate": self.get_ending_timestamp(context),
+            "name": f"SP advertised product report {start_date}-{end_date}",
+            "startDate": start_date,
+            "endDate": end_date,
             "configuration": {
                 "adProduct": "SPONSORED_PRODUCTS",
                 "groupBy": ["advertiser"],
@@ -458,13 +461,20 @@ class AdvertisedProductReportStream(AmazonADsStream):
             }
         }
         
+        logger.info(f"Request body: {body}")
+        
         request = requests.Request(
             method=http_method,
             url=url,
             headers=headers,
-            json=body  # Koristimo json parametar da automatski postavi Content-Type
+            json=body
         )
-        return request.prepare()
+        
+        prepared_request = request.prepare()
+        logger.info(f"Prepared request headers: {prepared_request.headers}")
+        logger.info(f"Prepared request body: {prepared_request.body}")
+        
+        return prepared_request
 
     def get_path(self, context: dict | None) -> str:
         """Return the API endpoint path."""
