@@ -393,19 +393,10 @@ class AdvertisedProductReportStream(AmazonADsStream):
     primary_keys = ["campaignId", "date", "advertisedAsin"]
     replication_key = "date"
     schema_filepath = SCHEMAS_DIR / "advertised_product_reports.json"
-    method = "POST"
-    records_jsonpath = "$.rows[*]"
+    method = "POST"  # Eksplicitno postavljamo POST metodu
     
     def _request(self, prepared_request, context: dict | None = None) -> requests.Response:
-        """Execute a prepared_request and return the response.
-        
-        Args:
-            prepared_request: The prepared request to execute
-            context: Stream context dictionary
-            
-        Returns:
-            Response object
-        """
+        """Execute a prepared_request and return the response."""
         # Log complete request details
         logger.info("====== REQUEST DETAILS ======")
         logger.info(f"URL: {prepared_request.url}")
@@ -414,39 +405,34 @@ class AdvertisedProductReportStream(AmazonADsStream):
         logger.info(f"Body: {prepared_request.body}")
         logger.info("===========================")
         
-        # Execute request using parent method
         return super()._request(prepared_request, context)
 
     @property
     def http_headers(self) -> dict:
         """Return the http headers needed."""
-        access_token = self.authenticator.access_token
-        if not access_token:
-            logger.error("No access token available")
-            raise Exception("No access token available")
-        
-        # Prvo kreiramo osnovne headers
         headers = super().http_headers
-        
-        # Dodajemo specifične headers za report API
         headers.update({
             "Content-Type": "application/vnd.createasyncreportrequest.v3+json",
             "Accept": "application/vnd.createasyncreportrequest.v3+json",
         })
-        
         return headers
 
-    def get_request_body(self, context: dict | None, next_page_token: t.Any | None) -> dict:
-        """Return a dictionary to be sent in the request body."""
-        logger.info("Generating request body for advertised_product_reports stream")
+    def prepare_request(self, context: dict | None, next_page_token: t.Any | None) -> requests.PreparedRequest:
+        """Prepare a request object.
         
-        start_date = self.get_starting_timestamp(context)
-        end_date = self.get_ending_timestamp(context)
+        Args:
+            context: Stream context dictionary
+            next_page_token: Token, page number or any request argument to request the
+                next page of data.
+        """
+        http_method = self.method
+        url = self.get_url(context)
+        headers = self.http_headers
         
         body = {
-            "name": f"SP advertised product report {start_date}-{end_date}",
-            "startDate": start_date,
-            "endDate": end_date,
+            "name": f"SP advertised product report {self.get_starting_timestamp(context)}-{self.get_ending_timestamp(context)}",
+            "startDate": self.get_starting_timestamp(context),
+            "endDate": self.get_ending_timestamp(context),
             "configuration": {
                 "adProduct": "SPONSORED_PRODUCTS",
                 "groupBy": ["advertiser"],
@@ -457,20 +443,13 @@ class AdvertisedProductReportStream(AmazonADsStream):
             }
         }
         
-        logger.info(f"AdvertisedProductReportStream request body: {body}")
-        return body
-
-    def validate_response(self, response: requests.Response) -> None:
-        """Additional response validation."""
-        logger.info(f"Response status code: {response.status_code}")
-        logger.info(f"Response headers: {dict(response.headers)}")
-        
-        try:
-            logger.info(f"Response body: {response.json()}")
-        except:
-            logger.info(f"Response text: {response.text}")
-            
-        super().validate_response(response)
+        request = requests.Request(
+            method=http_method,
+            url=url,
+            headers=headers,
+            json=body  # Koristimo json parametar da automatski postavi Content-Type
+        )
+        return request.prepare()
 
     def get_path(self, context: dict | None) -> str:
         """Return the API endpoint path."""
