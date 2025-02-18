@@ -1,15 +1,7 @@
 {
     "type": "object",
     "required": [
-        "adGroupId",
-        "campaignId",
-        "adProduct",
-        "name",
-        "state",
-        "deliveryStatus",
-        "creationDateTime",
-        "lastUpdatedDateTime",
-        "bid"
+        "adGroupId"
     ],
     "properties": {
         "adGroupId": {

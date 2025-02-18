@@ -1,12 +1,7 @@
 {
     "type": "object",
     "required": [
-        "campaignId",
-        "name",
-        "lastUpdatedDateTime",
-        "creationDateTime",
-        "state",
-        "deliveryStatus"
+        "campaignId"
     ],
     "properties": {
         "campaignId": {
