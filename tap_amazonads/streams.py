@@ -411,12 +411,11 @@ class AdvertisedProductReportStream(AmazonADsStream):
     @property
     def http_headers(self) -> dict:
         """Return the http headers needed."""
-        headers = {
-            "Content-Type": "application/vnd.createasyncreportrequest.v3+json",  # Updated content type
+        headers = super().http_headers  # Get base headers from AmazonADsStream
+        headers.update({
+            "Content-Type": "application/vnd.createasyncreportrequest.v3+json",
             "Accept": "application/vnd.createasyncreportrequest.v3+json",
-        }
-        if "user_agent" in self.config:
-            headers["User-Agent"] = self.config.get("user_agent")
+        })
         return headers
 
     def get_request_body(self, context: dict | None, next_page_token: t.Any | None) -> dict:
