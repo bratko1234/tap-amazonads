@@ -17,21 +17,18 @@ from tap_amazonads.streams import (
     PurchasedProductReportStream,
     GrossAndInvalidTrafficReportStream,
 )
-from tap_amazonads.config import CONFIG_SCHEMA
 
-# Define which streams are available in the tap
-STREAM_TYPES = [
-    # Base streams
-    CampaignsStream,
-    AdGroupsStream,
-    TargetsStream,
-    AdsStream,
-    # Report streams
-    SearchTermReportStream,
-    AdvertisedProductReportStream,
-    PurchasedProductReportStream,
-    GrossAndInvalidTrafficReportStream,
-]
+# Define stream name to class mapping
+STREAM_TYPES = {
+    "campaigns": CampaignsStream,
+    "adgroups": AdGroupsStream,
+    "targets": TargetsStream,
+    "ads": AdsStream,
+    "search_term_reports": SearchTermReportStream,
+    "advertised_product_reports": AdvertisedProductReportStream,
+    "purchased_product_reports": PurchasedProductReportStream,
+    "gross_and_invalid_traffic_reports": GrossAndInvalidTrafficReportStream,
+}
 
 class TapAmazonADs(Tap):
     """AmazonADs tap class."""
@@ -92,12 +89,11 @@ class TapAmazonADs(Tap):
         """Return a list of discovered streams."""
         enabled_streams = []
         
-        for stream_type in STREAM_TYPES:
-            stream_name = stream_type.__name__.lower().replace('stream', '')
+        for stream_name, stream_class in STREAM_TYPES.items():
             if self.config.get(f"enable_{stream_name}", True):
-                enabled_streams.append(stream_type)
+                enabled_streams.append(stream_class(tap=self))
                 
-        return [stream_class(tap=self) for stream_class in enabled_streams]
+        return enabled_streams
 
 
 if __name__ == "__main__":
