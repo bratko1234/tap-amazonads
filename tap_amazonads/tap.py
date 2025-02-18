@@ -50,30 +50,11 @@ class TapAmazonADs(Tap):
             th.DateTimeType,
             description="The earliest record date to sync",
         ),
-        th.Property(
-            "select",
-            th.ArrayType(th.StringType),
-            required=False,
-            description="List of fields to sync (e.g. campaigns.campaignId)",
-        ),
     ).to_dict()
-
-    def setup_mapper(self):
-        """Set up the stream mapper."""
-        self._config.setdefault("flattening_enabled", True)
-        self._config.setdefault("flattening_max_depth", 2)
-        return super().setup_mapper()
 
     def discover_streams(self) -> List[streams.AmazonADsStream]:
         """Return a list of discovered streams."""
-        enabled_streams = []
-        
-        for stream_type in STREAM_TYPES:
-            stream_name = stream_type.__name__.lower().replace('stream', '')
-            if self.config.get(f"enable_{stream_name}", True):
-                enabled_streams.append(stream_type)
-                
-        return [stream_class(tap=self) for stream_class in enabled_streams]
+        return [stream_class(tap=self) for stream_class in STREAM_TYPES]
 
 if __name__ == "__main__":
     TapAmazonADs.cli()
