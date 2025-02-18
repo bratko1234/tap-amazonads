@@ -403,7 +403,6 @@ class AdvertisedProductReportStream(AmazonADsStream):
         if not access_token:
             raise Exception("No access token available")
         
-        # Samo potrebni headeri, točno kao u Postmanu
         headers = {
             "Content-Type": "application/vnd.createasyncreportrequest.v3+json",
             "Accept": "application/vnd.createasyncreportrequest.v3+json",
@@ -412,11 +411,7 @@ class AdvertisedProductReportStream(AmazonADsStream):
             "Authorization": "Bearer " + access_token
         }
         
-        # Log headers (maskiramo token)
-        safe_headers = headers.copy()
-        safe_headers['Authorization'] = safe_headers['Authorization'][:20] + '...'
-        logger.info(f"Request headers: {safe_headers}")
-        
+        logger.info(f"Request headers: {headers}")
         return headers
 
     def get_request_body(self, context: dict | None, next_page_token: t.Any | None) -> dict:
@@ -424,38 +419,22 @@ class AdvertisedProductReportStream(AmazonADsStream):
         start_date = self.get_starting_timestamp(context)
         end_date = self.get_ending_timestamp(context)
         
-        return {
+        body = {
             "name": f"SP advertised product report {start_date}-{end_date}",
             "startDate": start_date,
             "endDate": end_date,
             "configuration": {
                 "adProduct": "SPONSORED_PRODUCTS",
                 "groupBy": ["advertiser"],
-                "columns": [
-                    "impressions", "clicks", "cost", "campaignId", "advertisedAsin",
-                    "date", "startDate", "endDate", "campaignName", "adGroupName",
-                    "adGroupId", "adId", "addToList", "qualifiedBorrows",
-                    "royaltyQualifiedBorrows", "portfolioId", "costPerClick",
-                    "clickThroughRate", "spend", "campaignBudgetCurrencyCode",
-                    "campaignBudgetAmount", "campaignBudgetType", "campaignStatus",
-                    "advertisedSku", "purchases1d", "purchases7d", "purchases14d",
-                    "purchases30d", "purchasesSameSku1d", "purchasesSameSku7d",
-                    "purchasesSameSku14d", "purchasesSameSku30d", "unitsSoldClicks1d",
-                    "unitsSoldClicks7d", "unitsSoldClicks14d", "unitsSoldClicks30d",
-                    "sales1d", "sales7d", "sales14d", "sales30d",
-                    "attributedSalesSameSku1d", "attributedSalesSameSku7d",
-                    "attributedSalesSameSku14d", "attributedSalesSameSku30d",
-                    "salesOtherSku7d", "unitsSoldSameSku1d", "unitsSoldSameSku7d",
-                    "unitsSoldSameSku14d", "unitsSoldSameSku30d", "unitsSoldOtherSku7d",
-                    "kindleEditionNormalizedPagesRead14d",
-                    "kindleEditionNormalizedPagesRoyalties14d", "acosClicks7d",
-                    "acosClicks14d", "roasClicks7d", "roasClicks14d"
-                ],
+                "columns": ["impressions", "clicks", "cost", "campaignId", "advertisedAsin"],
                 "reportTypeId": "spAdvertisedProduct",
-                "timeUnit": "SUMMARY",  # Changed from DAILY to SUMMARY as per documentation
+                "timeUnit": "SUMMARY",
                 "format": "GZIP_JSON"
             }
         }
+        
+        logger.info(f"Request body: {body}")
+        return body
 
     def validate_response(self, response: requests.Response) -> None:
         """Additional response validation."""
