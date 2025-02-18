@@ -402,7 +402,7 @@ class AdvertisedProductReportStream(AmazonADsStream):
     
     name = "advertised_product_reports"
     path = "/reporting/reports"
-    primary_keys = ["campaignId", "date", "advertisedAsin"]  # Changed from asin to advertisedAsin
+    primary_keys = ["campaignId", "date", "advertisedAsin"]
     replication_key = "date"
     schema_filepath = SCHEMAS_DIR / "advertised_product_reports.json"
     method = "POST"
@@ -411,7 +411,7 @@ class AdvertisedProductReportStream(AmazonADsStream):
     @property
     def http_headers(self) -> dict:
         """Return the http headers needed."""
-        headers = super().http_headers  # Get base headers from AmazonADsStream
+        headers = super().http_headers  # Get base headers including Authorization
         headers.update({
             "Content-Type": "application/vnd.createasyncreportrequest.v3+json",
             "Accept": "application/vnd.createasyncreportrequest.v3+json",
@@ -422,20 +422,20 @@ class AdvertisedProductReportStream(AmazonADsStream):
         """Return a dictionary to be sent in the request body."""
         return {
             "name": f"SP advertised product report {self.get_starting_timestamp(context)}-{self.get_ending_timestamp(context)}",
-            "reportTypeId": "spAdvertisedProduct",  # Added reportTypeId
+            "startDate": self.get_starting_timestamp(context),
+            "endDate": self.get_ending_timestamp(context),
             "configuration": {
                 "adProduct": "SPONSORED_PRODUCTS",
-                "groupBy": ["advertiser"],  # Updated groupBy
+                "groupBy": ["advertiser"],
+                "reportTypeId": "spAdvertisedProduct",
                 "timeUnit": "DAILY",
-                "format": "GZIP_JSON",  # Updated format
+                "format": "GZIP_JSON",
                 "columns": [
                     "date", "campaignName", "campaignId", "adGroupName", "adGroupId",
                     "advertisedAsin", "advertisedSku", "impressions", "clicks", "cost",
                     "purchases14d", "sales14d", "unitsSoldClicks14d"
                 ]
-            },
-            "startDate": self.get_starting_timestamp(context),
-            "endDate": self.get_ending_timestamp(context)
+            }
         }
 
     def get_path(self, context: dict | None) -> str:
