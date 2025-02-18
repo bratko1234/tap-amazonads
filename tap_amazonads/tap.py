@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from singer_sdk import Tap
 from typing import List
-import typing as th
+from singer_sdk import typing as th
 
 from tap_amazonads.streams import (
     CampaignsStream,
