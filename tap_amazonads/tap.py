@@ -18,6 +18,13 @@ from tap_amazonads.streams import (
 )
 from tap_amazonads.config import CONFIG_SCHEMA
 
+# Define which streams are available in the tap
+STREAM_TYPES = [
+    SearchTermReportStream,
+    AdvertisedProductReportStream,
+    PurchasedProductReportStream,
+    GrossAndInvalidTrafficReportStream,
+]
 
 class TapAmazonADs(Tap):
     """AmazonADs tap class."""
@@ -31,16 +38,7 @@ class TapAmazonADs(Tap):
         Returns:
             A list of discovered streams.
         """
-        return [
-            CampaignsStream(self),
-            AdGroupsStream(self),
-            TargetsStream(self),
-            AdsStream(self),
-            SearchTermReportStream(self),
-            AdvertisedProductReportStream(self),
-            PurchasedProductReportStream(self),
-            GrossAndInvalidTrafficReportStream(self),
-        ]
+        return [stream_class(tap=self) for stream_class in STREAM_TYPES]
 
 
 if __name__ == "__main__":
