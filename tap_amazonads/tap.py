@@ -124,7 +124,7 @@ class TapAmazonADs(Tap):
         # Prvo kreiramo sve streamove
         for stream_type in STREAM_TYPES:
             stream_name = stream_type.__name__.lower().replace('stream', '')
-            if self.config.get(f"enable_{stream_name}", True):
+            if self.config.get(f"enable_{stream_name}", False):
                 stream = stream_type(tap=self)
                 
                 # Ako postoji select konfiguracija, primijeni je
