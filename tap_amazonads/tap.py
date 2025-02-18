@@ -59,55 +59,6 @@ class TapAmazonADs(Tap):
             th.DateTimeType,
             description="The earliest record date to sync",
         ),
-        # Enable/disable streams
-        th.Property(
-            "enable_campaigns",
-            th.BooleanType,
-            default=True,
-            description="Enable/disable campaigns stream",
-        ),
-        th.Property(
-            "enable_adgroups",
-            th.BooleanType,
-            default=True,
-            description="Enable/disable ad groups stream", 
-        ),
-        th.Property(
-            "enable_targets",
-            th.BooleanType,
-            default=True,
-            description="Enable/disable targets stream",
-        ),
-        th.Property(
-            "enable_ads",
-            th.BooleanType,
-            default=True,
-            description="Enable/disable ads stream",
-        ),
-        th.Property(
-            "enable_search_term_reports",
-            th.BooleanType,
-            default=True,
-            description="Enable/disable search term reports stream",
-        ),
-        th.Property(
-            "enable_advertised_product_reports",
-            th.BooleanType,
-            default=True,
-            description="Enable/disable advertised product reports stream",
-        ),
-        th.Property(
-            "enable_purchased_product_reports",
-            th.BooleanType,
-            default=True,
-            description="Enable/disable purchased product reports stream",
-        ),
-        th.Property(
-            "enable_gross_and_invalid_traffic_reports",
-            th.BooleanType,
-            default=True,
-            description="Enable/disable gross and invalid traffic reports stream",
-        ),
         th.Property(
             "select",
             th.ArrayType(th.StringType),
