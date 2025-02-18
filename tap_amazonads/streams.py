@@ -6,10 +6,13 @@ import typing as t
 from pathlib import Path
 from singer_sdk import typing as th
 import requests
+import logging
 
 from tap_amazonads.client import AmazonADsStream
 
 SCHEMAS_DIR = Path(__file__).parent / "schemas"
+
+logger = logging.getLogger(__name__)
 
 class CampaignsStream(AmazonADsStream):
     """Campaigns stream."""
@@ -403,6 +406,13 @@ class AdvertisedProductReportStream(AmazonADsStream):
             "Amazon-Advertising-API-Scope": self.config.get("profile_id"),
             "Authorization": f"Bearer {self.authenticator.access_token}"
         }
+        
+        # Log headers (maskiranje sensitive podataka)
+        safe_headers = headers.copy()
+        if 'Authorization' in safe_headers:
+            safe_headers['Authorization'] = safe_headers['Authorization'][:20] + '...'
+        logger.info(f"Request headers: {safe_headers}")
+        
         return headers
 
     def get_request_body(self, context: dict | None, next_page_token: t.Any | None) -> dict:
