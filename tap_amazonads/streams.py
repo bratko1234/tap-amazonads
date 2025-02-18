@@ -414,29 +414,60 @@ class AdvertisedProductReportStream(AmazonADsStream):
         headers = super().http_headers  # Get base headers including Authorization
         headers.update({
             "Content-Type": "application/vnd.createasyncreportrequest.v3+json",
-            "Accept": "application/vnd.createasyncreportrequest.v3+json",
+            "Accept": "application/vnd.createasyncreportrequest.v3+json"
         })
         return headers
 
     def get_request_body(self, context: dict | None, next_page_token: t.Any | None) -> dict:
         """Return a dictionary to be sent in the request body."""
+        start_date = self.get_starting_timestamp(context)
+        end_date = self.get_ending_timestamp(context)
+        
         return {
-            "name": f"SP advertised product report {self.get_starting_timestamp(context)}-{self.get_ending_timestamp(context)}",
-            "startDate": self.get_starting_timestamp(context),
-            "endDate": self.get_ending_timestamp(context),
+            "name": f"SP advertised product report {start_date}-{end_date}",
+            "startDate": start_date,
+            "endDate": end_date,
             "configuration": {
                 "adProduct": "SPONSORED_PRODUCTS",
                 "groupBy": ["advertiser"],
-                "reportTypeId": "spAdvertisedProduct",
-                "timeUnit": "DAILY",
-                "format": "GZIP_JSON",
                 "columns": [
-                    "date", "campaignName", "campaignId", "adGroupName", "adGroupId",
-                    "advertisedAsin", "advertisedSku", "impressions", "clicks", "cost",
-                    "purchases14d", "sales14d", "unitsSoldClicks14d"
-                ]
+                    "impressions", "clicks", "cost", "campaignId", "advertisedAsin",
+                    "date", "startDate", "endDate", "campaignName", "adGroupName",
+                    "adGroupId", "adId", "addToList", "qualifiedBorrows",
+                    "royaltyQualifiedBorrows", "portfolioId", "costPerClick",
+                    "clickThroughRate", "spend", "campaignBudgetCurrencyCode",
+                    "campaignBudgetAmount", "campaignBudgetType", "campaignStatus",
+                    "advertisedSku", "purchases1d", "purchases7d", "purchases14d",
+                    "purchases30d", "purchasesSameSku1d", "purchasesSameSku7d",
+                    "purchasesSameSku14d", "purchasesSameSku30d", "unitsSoldClicks1d",
+                    "unitsSoldClicks7d", "unitsSoldClicks14d", "unitsSoldClicks30d",
+                    "sales1d", "sales7d", "sales14d", "sales30d",
+                    "attributedSalesSameSku1d", "attributedSalesSameSku7d",
+                    "attributedSalesSameSku14d", "attributedSalesSameSku30d",
+                    "salesOtherSku7d", "unitsSoldSameSku1d", "unitsSoldSameSku7d",
+                    "unitsSoldSameSku14d", "unitsSoldSameSku30d", "unitsSoldOtherSku7d",
+                    "kindleEditionNormalizedPagesRead14d",
+                    "kindleEditionNormalizedPagesRoyalties14d", "acosClicks7d",
+                    "acosClicks14d", "roasClicks7d", "roasClicks14d"
+                ],
+                "reportTypeId": "spAdvertisedProduct",
+                "timeUnit": "SUMMARY",  # Changed from DAILY to SUMMARY as per documentation
+                "format": "GZIP_JSON"
             }
         }
+
+    def validate_response(self, response: requests.Response) -> None:
+        """Additional response validation."""
+        super().validate_response(response)  # First run parent validation
+        
+        # Add specific validation for report API if needed
+        if response.status_code == 400:
+            error = response.json()
+            if "message" in error:
+                raise RetriableAPIError(
+                    f"Report API Error: {error['message']}", 
+                    response
+                )
 
     def get_path(self, context: dict | None) -> str:
         """Return the API endpoint path."""
