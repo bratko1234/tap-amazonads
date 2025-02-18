@@ -116,51 +116,22 @@ class TapAmazonADs(Tap):
         ),
     ).to_dict()
 
-    def discover_streams(self) -> List[streams.AmazonADsStream]:
+    def setup_mapper(self):
+        """Set up the stream mapper."""
+        self._config.setdefault("flattening_enabled", True)
+        self._config.setdefault("flattening_max_depth", 2)
+        return super().setup_mapper()
+
+    def discover_streams(self) -> List[streams.KlaviyoStream]:
         """Return a list of discovered streams."""
         enabled_streams = []
-        streams_by_type = {}  # Dodajemo dictionary za praćenje stream-ova po tipu
         
-        # Prvo kreiramo sve streamove
         for stream_type in STREAM_TYPES:
             stream_name = stream_type.__name__.lower().replace('stream', '')
-            if self.config.get(f"enable_{stream_name}", False):
-                stream = stream_type(tap=self)
+            if self.config.get(f"enable_{stream_name}", True):
+                enabled_streams.append(stream_type)
                 
-                # Ako postoji select konfiguracija, primijeni je
-                if "select" in self.config:
-                    selected_fields = set()
-                    for field in self.config["select"]:
-                        if field.startswith(stream.name + "."):
-                            field_path = field[len(stream.name) + 1:]
-                            selected_fields.add(field_path)
-                    
-                    if selected_fields:
-                        stream.selected_properties = selected_fields
-                
-                # Dodajemo stream u dictionary po tipu
-                streams_by_type[stream_type] = stream
-                
-                # Ako stream nema parent_stream_type, dodajemo ga odmah u enabled_streams
-                if not hasattr(stream_type, 'parent_stream_type') or stream_type.parent_stream_type is None:
-                    enabled_streams.append(stream)
-        
-        # Zatim procesiramo streamove koji imaju parent_stream_type
-        for stream_type in STREAM_TYPES:
-            if hasattr(stream_type, 'parent_stream_type') and stream_type.parent_stream_type:
-                stream = streams_by_type.get(stream_type)
-                if stream:
-                    # Provjeravamo da li je parent stream dostupan
-                    parent_stream = streams_by_type.get(stream_type.parent_stream_type)
-                    if parent_stream:
-                        enabled_streams.append(stream)
-                    else:
-                        self.logger.warning(
-                            f"Stream {stream_type.__name__} requires parent stream "
-                            f"{stream_type.parent_stream_type.__name__} which is not enabled"
-                        )
-        
-        return enabled_streams
+        return [stream_class(tap=self) for stream_class in enabled_streams]
 
 if __name__ == "__main__":
     TapAmazonADs.cli()
