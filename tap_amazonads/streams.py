@@ -399,8 +399,11 @@ class AdvertisedProductReportStream(AmazonADsStream):
     @property
     def http_headers(self) -> dict:
         """Return the http headers needed."""
+        logger.info("Generating headers for advertised_product_reports stream")
+        
         access_token = self.authenticator.access_token
         if not access_token:
+            logger.error("No access token available")
             raise Exception("No access token available")
         
         headers = {
@@ -411,11 +414,17 @@ class AdvertisedProductReportStream(AmazonADsStream):
             "Authorization": "Bearer " + access_token
         }
         
-        logger.info(f"Request headers: {headers}")
+        # Log headers (maskiramo sensitive podatke)
+        safe_headers = headers.copy()
+        safe_headers['Authorization'] = safe_headers['Authorization'][:20] + '...'
+        logger.info(f"AdvertisedProductReportStream headers: {safe_headers}")
+        
         return headers
 
     def get_request_body(self, context: dict | None, next_page_token: t.Any | None) -> dict:
         """Return a dictionary to be sent in the request body."""
+        logger.info("Generating request body for advertised_product_reports stream")
+        
         start_date = self.get_starting_timestamp(context)
         end_date = self.get_ending_timestamp(context)
         
@@ -433,21 +442,20 @@ class AdvertisedProductReportStream(AmazonADsStream):
             }
         }
         
-        logger.info(f"Request body: {body}")
+        logger.info(f"AdvertisedProductReportStream request body: {body}")
         return body
 
     def validate_response(self, response: requests.Response) -> None:
         """Additional response validation."""
-        super().validate_response(response)  # First run parent validation
+        logger.info(f"Response status code: {response.status_code}")
+        logger.info(f"Response headers: {dict(response.headers)}")
         
-        # Add specific validation for report API if needed
-        if response.status_code == 400:
-            error = response.json()
-            if "message" in error:
-                raise RetriableAPIError(
-                    f"Report API Error: {error['message']}", 
-                    response
-                )
+        try:
+            logger.info(f"Response body: {response.json()}")
+        except:
+            logger.info(f"Response text: {response.text}")
+            
+        super().validate_response(response)
 
     def get_path(self, context: dict | None) -> str:
         """Return the API endpoint path."""
