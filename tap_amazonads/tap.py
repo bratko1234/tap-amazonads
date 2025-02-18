@@ -6,26 +6,17 @@ from singer_sdk import Tap
 from singer_sdk import typing as th
 from typing import List
 
-from tap_amazonads.streams import (
-    CampaignsStream,
-    AdGroupsStream,
-    TargetsStream,
-    AdsStream,
-    SearchTermReportStream,
-    AdvertisedProductReportStream,
-    PurchasedProductReportStream,
-    GrossAndInvalidTrafficReportStream,
-)
+from tap_amazonads import streams
 
 STREAM_TYPES = [
-    CampaignsStream,
-    AdGroupsStream,
-    TargetsStream,
-    AdsStream,
-    SearchTermReportStream,
-    AdvertisedProductReportStream,
-    PurchasedProductReportStream,
-    GrossAndInvalidTrafficReportStream,
+    streams.CampaignsStream,
+    streams.AdGroupsStream,
+    streams.TargetsStream,
+    streams.AdsStream,
+    streams.SearchTermReportStream,
+    streams.AdvertisedProductReportStream,
+    streams.PurchasedProductReportStream,
+    streams.GrossAndInvalidTrafficReportStream,
 ]
 
 class TapAmazonADs(Tap):

@@ -212,3 +212,24 @@ class AmazonADsStream(RESTStream):
             raise FatalAPIError(msg) from e
 
         yield from extract_jsonpath(self.records_jsonpath, data)
+
+    def post_process(self, row: dict, context: dict | None = None) -> dict | None:
+        """Filter row to include only selected properties."""
+        if not self.selected_properties:
+            return row
+        
+        filtered_row = {}
+        for prop in self.selected_properties:
+            if "." in prop:
+                # Handle nested properties
+                parts = prop.split(".")
+                value = row
+                for part in parts:
+                    value = value.get(part, {})
+                if value != {}:
+                    filtered_row[parts[-1]] = value
+            else:
+                # Handle top-level properties
+                if prop in row:
+                    filtered_row[prop] = row[prop]
+        return filtered_row
