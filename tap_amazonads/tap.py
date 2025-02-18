@@ -11,6 +11,10 @@ from tap_amazonads.streams import (
     TargetsStream,
     AdsStream,
     AmazonADsStream,
+    SearchTermReportStream,
+    AdvertisedProductReportStream,
+    PurchasedProductReportStream,
+    GrossAndInvalidTrafficReportStream,
 )
 from tap_amazonads.config import CONFIG_SCHEMA
 
@@ -32,6 +36,10 @@ class TapAmazonADs(Tap):
             AdGroupsStream(self),
             TargetsStream(self),
             AdsStream(self),
+            SearchTermReportStream(self),
+            AdvertisedProductReportStream(self),
+            PurchasedProductReportStream(self),
+            GrossAndInvalidTrafficReportStream(self),
         ]
 
 

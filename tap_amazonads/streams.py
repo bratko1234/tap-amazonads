@@ -353,3 +353,171 @@ class AdsStream(AmazonADsStream):
             self.method = "GET"
             return "/sd/productAds"
         return self.path
+
+
+class SearchTermReportStream(AmazonADsStream):
+    """Search Term report stream."""
+    
+    name = "search_term_reports"
+    path = "/reporting/reports"
+    primary_keys = ["campaignId", "date", "searchTerm"]
+    replication_key = "date"
+    schema_filepath = SCHEMAS_DIR / "search_term_reports.json"
+    parent_stream_type = CampaignsStream
+    method = "POST"
+    records_jsonpath = "$.rows[*]"
+    
+    @property
+    def http_headers(self) -> dict:
+        """Return the http headers needed."""
+        headers = {
+            "Content-Type": "application/vnd.createasyncreport.v3+json",
+            "Accept": "application/vnd.createasyncreport.v3+json",
+        }
+        if "user_agent" in self.config:
+            headers["User-Agent"] = self.config.get("user_agent")
+        return headers
+
+    def get_request_body(self, context: dict | None, next_page_token: t.Any | None) -> dict:
+        """Return a dictionary to be sent in the request body."""
+        return {
+            "reportType": "searchTerm",
+            "configuration": {
+                "adProduct": "SPONSORED_PRODUCTS",
+                "groupBy": ["searchTerm", "campaignId", "adGroupId"],
+                "timeUnit": "DAILY",
+                "format": "JSON"
+            },
+            "startDate": self.get_starting_timestamp(context),
+            "endDate": self.get_ending_timestamp(context)
+        }
+
+    def get_path(self, context: dict | None) -> str:
+        """Return the API endpoint path."""
+        return "/reporting/reports"
+
+
+class AdvertisedProductReportStream(AmazonADsStream):
+    """Advertised Product report stream."""
+    
+    name = "advertised_product_reports"
+    path = "/reporting/reports"
+    primary_keys = ["campaignId", "date", "asin"]
+    replication_key = "date"
+    schema_filepath = SCHEMAS_DIR / "advertised_product_reports.json"
+    parent_stream_type = CampaignsStream
+    method = "POST"
+    records_jsonpath = "$.rows[*]"
+    
+    @property
+    def http_headers(self) -> dict:
+        """Return the http headers needed."""
+        headers = {
+            "Content-Type": "application/vnd.createasyncreport.v3+json",
+            "Accept": "application/vnd.createasyncreport.v3+json",
+        }
+        if "user_agent" in self.config:
+            headers["User-Agent"] = self.config.get("user_agent")
+        return headers
+
+    def get_request_body(self, context: dict | None, next_page_token: t.Any | None) -> dict:
+        """Return a dictionary to be sent in the request body."""
+        return {
+            "reportType": "advertisedProduct",
+            "configuration": {
+                "adProduct": "SPONSORED_PRODUCTS",
+                "groupBy": ["asin", "campaignId", "adGroupId"],
+                "timeUnit": "DAILY",
+                "format": "JSON"
+            },
+            "startDate": self.get_starting_timestamp(context),
+            "endDate": self.get_ending_timestamp(context)
+        }
+
+    def get_path(self, context: dict | None) -> str:
+        """Return the API endpoint path."""
+        return "/reporting/reports"
+
+
+class PurchasedProductReportStream(AmazonADsStream):
+    """Purchased Product report stream."""
+    
+    name = "purchased_product_reports"
+    path = "/reporting/reports"
+    primary_keys = ["campaignId", "date", "asin"]
+    replication_key = "date"
+    schema_filepath = SCHEMAS_DIR / "purchased_product_reports.json"
+    parent_stream_type = CampaignsStream
+    method = "POST"
+    records_jsonpath = "$.rows[*]"
+    
+    @property
+    def http_headers(self) -> dict:
+        """Return the http headers needed."""
+        headers = {
+            "Content-Type": "application/vnd.createasyncreport.v3+json",
+            "Accept": "application/vnd.createasyncreport.v3+json",
+        }
+        if "user_agent" in self.config:
+            headers["User-Agent"] = self.config.get("user_agent")
+        return headers
+
+    def get_request_body(self, context: dict | None, next_page_token: t.Any | None) -> dict:
+        """Return a dictionary to be sent in the request body."""
+        return {
+            "reportType": "purchasedProduct",
+            "configuration": {
+                "adProduct": "SPONSORED_PRODUCTS",
+                "groupBy": ["asin", "campaignId", "adGroupId"],
+                "timeUnit": "DAILY",
+                "format": "JSON"
+            },
+            "startDate": self.get_starting_timestamp(context),
+            "endDate": self.get_ending_timestamp(context)
+        }
+
+    def get_path(self, context: dict | None) -> str:
+        """Return the API endpoint path."""
+        return "/reporting/reports"
+
+
+class GrossAndInvalidTrafficReportStream(AmazonADsStream):
+    """Gross and Invalid Traffic report stream."""
+    
+    name = "gross_and_invalid_traffic_reports"
+    path = "/reporting/reports"
+    primary_keys = ["campaignId", "date"]
+    replication_key = "date"
+    schema_filepath = SCHEMAS_DIR / "gross_and_invalid_traffic_reports.json"
+    parent_stream_type = CampaignsStream
+    method = "POST"
+    records_jsonpath = "$.rows[*]"
+    
+    @property
+    def http_headers(self) -> dict:
+        """Return the http headers needed."""
+        headers = {
+            "Content-Type": "application/vnd.createasyncreport.v3+json",
+            "Accept": "application/vnd.createasyncreport.v3+json",
+        }
+        if "user_agent" in self.config:
+            headers["User-Agent"] = self.config.get("user_agent")
+        return headers
+
+    def get_request_body(self, context: dict | None, next_page_token: t.Any | None) -> dict:
+        """Return a dictionary to be sent in the request body."""
+        return {
+            "reportType": "grossAndInvalidTraffic",
+            "configuration": {
+                "adProduct": "SPONSORED_PRODUCTS",
+                "groupBy": ["campaignId", "adGroupId"],
+                "timeUnit": "DAILY",
+                "format": "JSON"
+            },
+            "startDate": self.get_starting_timestamp(context),
+            "endDate": self.get_ending_timestamp(context)
+        }
+
+    def get_path(self, context: dict | None) -> str:
+        """Return the API endpoint path."""
+        return "/reporting/reports"

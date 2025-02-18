@@ -1,0 +1,59 @@
+{
+    "type": "object",
+    "properties": {
+        "date": {
+            "type": ["string", "null"],
+            "format": "date",
+            "description": "The date of the report data"
+        },
+        "campaignId": {
+            "type": ["string", "null"],
+            "description": "The unique identifier of the campaign"
+        },
+        "campaignName": {
+            "type": ["string", "null"],
+            "description": "The name of the campaign"
+        },
+        "adGroupId": {
+            "type": ["string", "null"],
+            "description": "The unique identifier of the ad group"
+        },
+        "adGroupName": {
+            "type": ["string", "null"],
+            "description": "The name of the ad group"
+        },
+        "asin": {
+            "type": ["string", "null"],
+            "description": "The Amazon Standard Identification Number of the purchased product"
+        },
+        "sku": {
+            "type": ["string", "null"],
+            "description": "The Stock Keeping Unit of the purchased product"
+        },
+        "impressions": {
+            "type": ["integer", "null"],
+            "description": "Number of times the ad was displayed"
+        },
+        "clicks": {
+            "type": ["integer", "null"],
+            "description": "Number of clicks on the ad"
+        },
+        "cost": {
+            "type": ["number", "null"],
+            "description": "Total cost of advertising"
+        },
+        "purchasedProductSales14d": {
+            "type": ["number", "null"],
+            "description": "Sales value of purchased products within 14 days"
+        },
+        "purchasedProductUnits14d": {
+            "type": ["integer", "null"],
+            "description": "Number of purchased product units within 14 days"
+        }
+    },
+    "required": [
+        "date",
+        "campaignId",
+        "asin"
+    ]
+}

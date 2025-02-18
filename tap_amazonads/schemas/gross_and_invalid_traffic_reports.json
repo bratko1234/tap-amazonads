@@ -1,0 +1,54 @@
+{
+    "type": "object",
+    "properties": {
+        "date": {
+            "type": ["string", "null"],
+            "format": "date",
+            "description": "The date of the report data"
+        },
+        "campaignId": {
+            "type": ["string", "null"],
+            "description": "The unique identifier of the campaign"
+        },
+        "campaignName": {
+            "type": ["string", "null"],
+            "description": "The name of the campaign"
+        },
+        "adGroupId": {
+            "type": ["string", "null"],
+            "description": "The unique identifier of the ad group"
+        },
+        "adGroupName": {
+            "type": ["string", "null"],
+            "description": "The name of the ad group"
+        },
+        "grossImpressions": {
+            "type": ["integer", "null"],
+            "description": "Total number of impressions before invalid traffic removal"
+        },
+        "grossClicks": {
+            "type": ["integer", "null"],
+            "description": "Total number of clicks before invalid traffic removal"
+        },
+        "invalidImpressions": {
+            "type": ["integer", "null"],
+            "description": "Number of invalid impressions removed"
+        },
+        "invalidClicks": {
+            "type": ["integer", "null"],
+            "description": "Number of invalid clicks removed"
+        },
+        "validImpressions": {
+            "type": ["integer", "null"],
+            "description": "Number of valid impressions after invalid traffic removal"
+        },
+        "validClicks": {
+            "type": ["integer", "null"],
+            "description": "Number of valid clicks after invalid traffic removal"
+        }
+    },
+    "required": [
+        "date",
+        "campaignId"
+    ]
+}

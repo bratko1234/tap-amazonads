@@ -1,0 +1,63 @@
+{
+    "type": "object",
+    "properties": {
+        "date": {
+            "type": ["string", "null"],
+            "format": "date",
+            "description": "The date of the report data"
+        },
+        "campaignId": {
+            "type": ["string", "null"],
+            "description": "The unique identifier of the campaign"
+        },
+        "campaignName": {
+            "type": ["string", "null"],
+            "description": "The name of the campaign"
+        },
+        "adGroupId": {
+            "type": ["string", "null"],
+            "description": "The unique identifier of the ad group"
+        },
+        "adGroupName": {
+            "type": ["string", "null"],
+            "description": "The name of the ad group"
+        },
+        "searchTerm": {
+            "type": ["string", "null"],
+            "description": "The customer search term"
+        },
+        "impressions": {
+            "type": ["integer", "null"],
+            "description": "Number of times the ad was displayed"
+        },
+        "clicks": {
+            "type": ["integer", "null"],
+            "description": "Number of clicks on the ad"
+        },
+        "cost": {
+            "type": ["number", "null"],
+            "description": "Total cost of advertising"
+        },
+        "purchases14d": {
+            "type": ["integer", "null"],
+            "description": "Number of purchases within 14 days"
+        },
+        "sales14d": {
+            "type": ["number", "null"],
+            "description": "Total sales value within 14 days"
+        },
+        "attributedSales14d": {
+            "type": ["number", "null"],
+            "description": "Attributed sales within 14 days"
+        },
+        "attributedUnitsOrdered14d": {
+            "type": ["integer", "null"],
+            "description": "Attributed units ordered within 14 days"
+        }
+    },
+    "required": [
+        "date",
+        "campaignId",
+        "searchTerm"
+    ]
+}
