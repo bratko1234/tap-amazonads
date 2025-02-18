@@ -108,6 +108,12 @@ class TapAmazonADs(Tap):
             default=True,
             description="Enable/disable gross and invalid traffic reports stream",
         ),
+        th.Property(
+            "select",
+            th.ArrayType(th.StringType),
+            required=False,
+            description="List of fields to sync (e.g. campaigns.campaignId)",
+        ),
     ).to_dict()
 
     def discover_streams(self) -> List[streams.AmazonADsStream]:
@@ -117,9 +123,23 @@ class TapAmazonADs(Tap):
         for stream_type in STREAM_TYPES:
             stream_name = stream_type.__name__.lower().replace('stream', '')
             if self.config.get(f"enable_{stream_name}", True):
-                enabled_streams.append(stream_type)
+                stream = stream_type(tap=self)
                 
-        return [stream_class(tap=self) for stream_class in enabled_streams]
+                # Ako postoji select konfiguracija, primijeni je
+                if "select" in self.config:
+                    selected_fields = set()
+                    for field in self.config["select"]:
+                        if field.startswith(stream.name + "."):
+                            # Ukloni ime streama i tačku da dobiješ samo property path
+                            field_path = field[len(stream.name) + 1:]
+                            selected_fields.add(field_path)
+                    
+                    if selected_fields:
+                        stream.selected_properties = selected_fields
+                
+                enabled_streams.append(stream)
+                
+        return enabled_streams
 
 if __name__ == "__main__":
     TapAmazonADs.cli()

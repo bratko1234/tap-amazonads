@@ -82,7 +82,18 @@ class AmazonADsStream(RESTStream):
     records_jsonpath = "$.data[*]"  # Amazon Ads API typically returns data in a 'data' field
     next_page_token_jsonpath = None  # We'll use our custom paginator
     page_size = 100
+    selected_properties: set[str] = set()  # Set of selected property paths
 
+    def get_selected_properties(self) -> set[str]:
+        """Get set of selected property names."""
+        if not self.selected:
+            return set()
+        
+        if not self.selected_properties:
+            return super().get_selected_properties()
+            
+        return self.selected_properties
+    
     @property
     def url_base(self) -> str:
         """Return the API URL root, configurable via tap settings."""
