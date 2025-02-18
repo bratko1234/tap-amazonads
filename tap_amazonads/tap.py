@@ -20,6 +20,12 @@ from tap_amazonads.config import CONFIG_SCHEMA
 
 # Define which streams are available in the tap
 STREAM_TYPES = [
+    # Base streams
+    CampaignsStream,
+    AdGroupsStream,
+    TargetsStream,
+    AdsStream,
+    # Report streams
     SearchTermReportStream,
     AdvertisedProductReportStream,
     PurchasedProductReportStream,
