@@ -399,12 +399,20 @@ class AdvertisedProductReportStream(AmazonADsStream):
     @property
     def http_headers(self) -> dict:
         """Return the http headers needed."""
+        # Prvo dohvatimo access token
+        access_token = self.authenticator.access_token
+        if not access_token:
+            raise Exception("No access token available")
+
+        logger.info(f"Access token type: {type(access_token)}")
+        logger.info(f"Access token length: {len(access_token)}")
+        
         headers = {
             "Content-Type": "application/vnd.createasyncreportrequest.v3+json",
             "Accept": "application/vnd.createasyncreportrequest.v3+json",
             "Amazon-Advertising-API-ClientId": self.config.get("client_id"),
             "Amazon-Advertising-API-Scope": self.config.get("profile_id"),
-            "Authorization": f"Bearer {self.authenticator.access_token}"
+            "Authorization": "Bearer " + access_token  # Eksplicitno odvajamo "Bearer" i token
         }
         
         # Log headers (maskiranje sensitive podataka)
