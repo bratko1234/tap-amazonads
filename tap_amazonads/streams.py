@@ -111,13 +111,6 @@ class CampaignsStream(AmazonADsStream):
             return "/sd/campaigns"
         return self.path
 
-    def get_child_context(self, record: dict, context: dict | None) -> dict:
-        """Return a context dictionary for child streams."""
-        return {
-            "campaignId": record["campaignId"],
-            "adProduct": record.get("adProduct", "SPONSORED_PRODUCTS")
-        }
-
 
 class AdGroupsStream(AmazonADsStream):
     """Ad Groups stream."""
@@ -192,14 +185,6 @@ class AdGroupsStream(AmazonADsStream):
             self.method = "GET"
             return "/sd/adGroups"
         return self.path
-
-    def get_child_context(self, record: dict, context: dict | None) -> dict:
-        """Return a context dictionary for child streams."""
-        return {
-            "adGroupId": record["adGroupId"],
-            "campaignId": record["campaignId"],
-            "adProduct": context.get("adProduct", "SPONSORED_PRODUCTS") if context else record.get("adProduct", "SPONSORED_PRODUCTS")
-        }
 
 
 class TargetsStream(AmazonADsStream):
