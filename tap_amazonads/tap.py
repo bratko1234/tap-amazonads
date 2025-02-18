@@ -73,7 +73,7 @@ class TapAmazonADs(Tap):
         self._config.setdefault("flattening_max_depth", 2)
         return super().setup_mapper()
 
-    def discover_streams(self) -> List[streams.KlaviyoStream]:
+    def discover_streams(self) -> List[streams.AmazonADsStream]:
         """Return a list of discovered streams."""
         enabled_streams = []
         
