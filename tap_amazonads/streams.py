@@ -396,11 +396,30 @@ class AdvertisedProductReportStream(AmazonADsStream):
     method = "POST"
     records_jsonpath = "$.rows[*]"
     
+    def _request(self, prepared_request, context: dict | None = None) -> requests.Response:
+        """Execute a prepared_request and return the response.
+        
+        Args:
+            prepared_request: The prepared request to execute
+            context: Stream context dictionary
+            
+        Returns:
+            Response object
+        """
+        # Log complete request details
+        logger.info("====== REQUEST DETAILS ======")
+        logger.info(f"URL: {prepared_request.url}")
+        logger.info(f"Method: {prepared_request.method}")
+        logger.info(f"Headers: {prepared_request.headers}")
+        logger.info(f"Body: {prepared_request.body}")
+        logger.info("===========================")
+        
+        # Execute request using parent method
+        return super()._request(prepared_request, context)
+
     @property
     def http_headers(self) -> dict:
         """Return the http headers needed."""
-        logger.info("Generating headers for advertised_product_reports stream")
-        
         access_token = self.authenticator.access_token
         if not access_token:
             logger.error("No access token available")
@@ -414,12 +433,6 @@ class AdvertisedProductReportStream(AmazonADsStream):
             "Content-Type": "application/vnd.createasyncreportrequest.v3+json",
             "Accept": "application/vnd.createasyncreportrequest.v3+json",
         })
-        
-        # Log headers (maskiramo sensitive podatke)
-        safe_headers = headers.copy()
-        if 'Authorization' in safe_headers:
-            safe_headers['Authorization'] = safe_headers['Authorization'][:20] + '...'
-        logger.info(f"AdvertisedProductReportStream complete headers: {safe_headers}")
         
         return headers
 
