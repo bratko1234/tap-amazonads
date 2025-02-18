@@ -3,38 +3,63 @@
 from __future__ import annotations
 
 from singer_sdk import Tap
-from typing import List
 from singer_sdk import typing as th
+from typing import List
 
 from tap_amazonads.streams import (
     CampaignsStream,
     AdGroupsStream,
     TargetsStream,
     AdsStream,
-    AmazonADsStream,
     SearchTermReportStream,
     AdvertisedProductReportStream,
     PurchasedProductReportStream,
     GrossAndInvalidTrafficReportStream,
 )
 
-# Define stream name to class mapping
-STREAM_TYPES = {
-    "campaigns": CampaignsStream,
-    "adgroups": AdGroupsStream,
-    "targets": TargetsStream,
-    "ads": AdsStream,
-    "search_term_reports": SearchTermReportStream,
-    "advertised_product_reports": AdvertisedProductReportStream,
-    "purchased_product_reports": PurchasedProductReportStream,
-    "gross_and_invalid_traffic_reports": GrossAndInvalidTrafficReportStream,
-}
+STREAM_TYPES = [
+    CampaignsStream,
+    AdGroupsStream,
+    TargetsStream,
+    AdsStream,
+    SearchTermReportStream,
+    AdvertisedProductReportStream,
+    PurchasedProductReportStream,
+    GrossAndInvalidTrafficReportStream,
+]
 
 class TapAmazonADs(Tap):
     """AmazonADs tap class."""
-
+    
     name = "tap-amazonads"
+
     config_jsonschema = th.PropertiesList(
+        th.Property(
+            "client_id",
+            th.StringType,
+            required=True,
+            description="The client ID",
+        ),
+        th.Property(
+            "client_secret", 
+            th.StringType,
+            required=True,
+            secret=True,
+            description="The client secret",
+        ),
+        th.Property(
+            "refresh_token",
+            th.StringType,
+            required=True,
+            secret=True,
+            description="The refresh token",
+        ),
+        th.Property(
+            "start_date",
+            th.DateTimeType,
+            description="The earliest record date to sync",
+        ),
+        # Enable/disable streams
         th.Property(
             "enable_campaigns",
             th.BooleanType,
@@ -42,10 +67,10 @@ class TapAmazonADs(Tap):
             description="Enable/disable campaigns stream",
         ),
         th.Property(
-            "enable_ad_groups",
+            "enable_adgroups",
             th.BooleanType,
             default=True,
-            description="Enable/disable ad groups stream",
+            description="Enable/disable ad groups stream", 
         ),
         th.Property(
             "enable_targets",
@@ -85,16 +110,16 @@ class TapAmazonADs(Tap):
         ),
     ).to_dict()
 
-    def discover_streams(self) -> List[AmazonADsStream]:
+    def discover_streams(self) -> List[streams.AmazonADsStream]:
         """Return a list of discovered streams."""
         enabled_streams = []
         
-        for stream_name, stream_class in STREAM_TYPES.items():
+        for stream_type in STREAM_TYPES:
+            stream_name = stream_type.__name__.lower().replace('stream', '')
             if self.config.get(f"enable_{stream_name}", True):
-                enabled_streams.append(stream_class(tap=self))
+                enabled_streams.append(stream_type)
                 
-        return enabled_streams
-
+        return [stream_class(tap=self) for stream_class in enabled_streams]
 
 if __name__ == "__main__":
     TapAmazonADs.cli()
