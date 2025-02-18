@@ -127,7 +127,7 @@ class AdGroupsStream(AmazonADsStream):
     primary_keys = ["adGroupId"]
     replication_key = None  # Removing replication key since lastUpdatedDateTime is not available
     records_jsonpath = "$.adGroups[*]"
-    parent_stream_type = CampaignsStream
+   # parent_stream_type = CampaignsStream
     method = "POST"  # Default to POST for SP and SB
     records_jsonpath = "$.adGroups[*]"  # Updated to match actual response structure
     ignore_parent_replication_keys = True
@@ -210,7 +210,7 @@ class TargetsStream(AmazonADsStream):
     primary_keys: t.ClassVar[list[str]] = ["targetId"]
     replication_key = "lastUpdatedDateTime"
     schema_filepath = SCHEMAS_DIR / "targets.json"
-    parent_stream_type = AdGroupsStream
+    #parent_stream_type = AdGroupsStream
     method = "POST"  # Default to POST for SP and SB
     records_jsonpath = "$.targetingClauses[*]"
     ignore_parent_replication_keys = True
@@ -284,7 +284,7 @@ class AdsStream(AmazonADsStream):
     primary_keys = ["adId"]
     replication_key = None  # Removing replication key since lastUpdatedDateTime is not available
     records_jsonpath = "$.productAds[*]"
-    parent_stream_type = AdGroupsStream
+    #parent_stream_type = AdGroupsStream
     ignore_parent_replication_keys = True
     schema_filepath = SCHEMAS_DIR / "ads.json"
     method = "POST"
@@ -363,7 +363,7 @@ class SearchTermReportStream(AmazonADsStream):
     primary_keys = ["campaignId", "date", "searchTerm"]
     replication_key = "date"
     schema_filepath = SCHEMAS_DIR / "search_term_reports.json"
-    parent_stream_type = CampaignsStream
+    #parent_stream_type = CampaignsStream
     method = "POST"
     records_jsonpath = "$.rows[*]"
     
@@ -405,7 +405,7 @@ class AdvertisedProductReportStream(AmazonADsStream):
     primary_keys = ["campaignId", "date", "asin"]
     replication_key = "date"
     schema_filepath = SCHEMAS_DIR / "advertised_product_reports.json"
-    parent_stream_type = CampaignsStream
+    #parent_stream_type = CampaignsStream
     method = "POST"
     records_jsonpath = "$.rows[*]"
     
@@ -447,7 +447,7 @@ class PurchasedProductReportStream(AmazonADsStream):
     primary_keys = ["campaignId", "date", "asin"]
     replication_key = "date"
     schema_filepath = SCHEMAS_DIR / "purchased_product_reports.json"
-    parent_stream_type = CampaignsStream
+    #parent_stream_type = CampaignsStream
     method = "POST"
     records_jsonpath = "$.rows[*]"
     
