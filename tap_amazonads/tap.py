@@ -119,7 +119,9 @@ class TapAmazonADs(Tap):
     def discover_streams(self) -> List[streams.AmazonADsStream]:
         """Return a list of discovered streams."""
         enabled_streams = []
+        streams_by_type = {}  # Dodajemo dictionary za praćenje stream-ova po tipu
         
+        # Prvo kreiramo sve streamove
         for stream_type in STREAM_TYPES:
             stream_name = stream_type.__name__.lower().replace('stream', '')
             if self.config.get(f"enable_{stream_name}", True):
@@ -130,15 +132,34 @@ class TapAmazonADs(Tap):
                     selected_fields = set()
                     for field in self.config["select"]:
                         if field.startswith(stream.name + "."):
-                            # Ukloni ime streama i tačku da dobiješ samo property path
                             field_path = field[len(stream.name) + 1:]
                             selected_fields.add(field_path)
                     
                     if selected_fields:
                         stream.selected_properties = selected_fields
                 
-                enabled_streams.append(stream)
+                # Dodajemo stream u dictionary po tipu
+                streams_by_type[stream_type] = stream
                 
+                # Ako stream nema parent_stream_type, dodajemo ga odmah u enabled_streams
+                if not hasattr(stream_type, 'parent_stream_type') or stream_type.parent_stream_type is None:
+                    enabled_streams.append(stream)
+        
+        # Zatim procesiramo streamove koji imaju parent_stream_type
+        for stream_type in STREAM_TYPES:
+            if hasattr(stream_type, 'parent_stream_type') and stream_type.parent_stream_type:
+                stream = streams_by_type.get(stream_type)
+                if stream:
+                    # Provjeravamo da li je parent stream dostupan
+                    parent_stream = streams_by_type.get(stream_type.parent_stream_type)
+                    if parent_stream:
+                        enabled_streams.append(stream)
+                    else:
+                        self.logger.warning(
+                            f"Stream {stream_type.__name__} requires parent stream "
+                            f"{stream_type.parent_stream_type.__name__} which is not enabled"
+                        )
+        
         return enabled_streams
 
 if __name__ == "__main__":
