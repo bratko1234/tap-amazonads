@@ -1,12 +1,14 @@
 """AmazonADs tap class."""
 
 from __future__ import annotations
-
+import logging
 from singer_sdk import Tap
 from singer_sdk import typing as th
 from typing import List
 
 from tap_amazonads import streams
+
+logger = logging.getLogger(__name__)
 
 STREAM_TYPES = [
     streams.CampaignsStream,
@@ -56,37 +58,17 @@ class TapAmazonADs(Tap):
             th.DateTimeType,
             description="The earliest record date to sync",
         ),
-        # Opcionalno: dodaj _select u JSON schemu ako želiš eksplicitno ga definisati
-        th.Property(
-            "_select",
-            th.ArrayType(th.StringType),
-            description="Selection extra for filtering streams",
-            default=["*.*"],
-        ),
     ).to_dict()
 
-    @property
-    def selected(self) -> list[str]:
-        """Vraća listu selektovanih entiteta (iz _select extra)."""
-        return self.config.get("_select", ["*.*"])
-
-    @property
-    def selected_streams(self) -> list[str]:
-        """Izvlači imena odabranih streamova iz `selected`.
-
-        Pretpostavljamo da su vrijednosti u formatu "stream_name.column_name".
-        """
-        if not self.selected:
-            return []
-        # Izvući jedinstvena imena streamova (deo pre tačke)
-        return list({s.split('.')[0] for s in self.selected if '.' in s})
-
     def discover_streams(self) -> List[streams.AmazonADsStream]:
-        all_streams = [stream_class(tap=self) for stream_class in STREAM_TYPES]
-        # Ako postoji filtriranje streamova, vrati samo one čije ime je odabrano
-        if self.selected_streams:
-            return [s for s in all_streams if s.name in self.selected_streams]
-        return all_streams
+        """Return a list of discovered streams.
+        
+        Returns:
+            A list of all available streams without filtering.
+            Stream selection will be handled by Singer SDK based on metadata.
+        """
+        logger.info("Discovering all available streams")
+        return [stream_class(tap=self) for stream_class in STREAM_TYPES]
 
 if __name__ == "__main__":
     TapAmazonADs.cli()
