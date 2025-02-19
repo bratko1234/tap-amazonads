@@ -46,6 +46,12 @@ class TapAmazonADs(Tap):
             description="The refresh token",
         ),
         th.Property(
+            "profile_id",
+            th.StringType,
+            required=True,
+            description="The Amazon Advertising API profile ID",
+        ),
+        th.Property(
             "start_date",
             th.DateTimeType,
             description="The earliest record date to sync",
