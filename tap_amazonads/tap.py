@@ -59,8 +59,11 @@ class TapAmazonADs(Tap):
     ).to_dict()
 
     def discover_streams(self) -> List[streams.AmazonADsStream]:
-        """Return a list of discovered streams."""
-        return [stream_class(tap=self) for stream_class in STREAM_TYPES]
+        all_streams = [stream_class(tap=self) for stream_class in STREAM_TYPES]
+        # Pretpostavimo da 'selected_streams' sadrži imena streamova koje želimo pokrenuti
+        if self.selected_streams:
+            return [s for s in all_streams if s.name in self.selected_streams]
+        return all_streams
 
 if __name__ == "__main__":
     TapAmazonADs.cli()
