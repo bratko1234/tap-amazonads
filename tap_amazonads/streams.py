@@ -7,6 +7,7 @@ from pathlib import Path
 from singer_sdk import typing as th
 import requests
 import logging
+import json
 
 from tap_amazonads.client import AmazonADsStream
 
@@ -402,6 +403,8 @@ class AdvertisedProductReportStream(AmazonADsStream):
 
     def request_records(self, context: dict | None) -> t.Iterable[dict]:
         """Request records from REST endpoint(s)."""
+        logger.info("\n=== Starting request_records ===")
+        
         if not self.authenticator:
             logger.error("No authenticator found!")
             raise Exception("Authenticator not initialized")
@@ -416,15 +419,31 @@ class AdvertisedProductReportStream(AmazonADsStream):
             logger.error("No access token available")
             raise Exception("Access token not available")
             
-        logger.info("Authentication check passed, proceeding with request")
+        logger.info("Authentication check passed")
+        logger.info(f"Access token (first 20 chars): {access_token[:20]}...")
         
         # Kreiramo report request
         prepared_request = self.prepare_request(context, None)
+        
+        # Logujemo kompletan request kao CURL komandu
+        curl_command = f"""
+curl --location --request {prepared_request.method} '{prepared_request.url}' \\
+--header 'Content-Type: {prepared_request.headers.get("Content-Type", "")}' \\
+--header 'Accept: {prepared_request.headers.get("Accept", "")}' \\
+--header 'Amazon-Advertising-API-ClientId: {prepared_request.headers.get("Amazon-Advertising-API-ClientId", "")}' \\
+--header 'Amazon-Advertising-API-Scope: {prepared_request.headers.get("Amazon-Advertising-API-Scope", "")}' \\
+--header 'Authorization: Bearer {access_token}' \\
+--data-raw '{prepared_request.body.decode() if prepared_request.body else ""}'
+"""
+        logger.info(f"Equivalent CURL command:\n{curl_command}")
+        
         response = self._request(prepared_request, context)
         
+        logger.info("\n=== Response Details ===")
         logger.info(f"Response status code: {response.status_code}")
         logger.info(f"Response headers: {dict(response.headers)}")
         logger.info(f"Response body: {response.text}")
+        logger.info("=== End Response Details ===\n")
         
         if response.status_code != 200:
             raise Exception(f"Report request failed: {response.text}")
@@ -432,25 +451,23 @@ class AdvertisedProductReportStream(AmazonADsStream):
         report_info = response.json()
         logger.info(f"Successfully created report request: {report_info}")
         
-        # Za sada samo vraćamo prazan iterator
         yield from []
 
     def prepare_request(self, context: dict | None, next_page_token: t.Any | None) -> requests.PreparedRequest:
         """Prepare a request object."""
-        logger.info("Preparing request for advertised_product_reports")
+        logger.info("\n=== Preparing Request ===")
         
         http_method = self.method
         url = self.get_url(context)
         headers = self.http_headers
         
-        # Usklađujemo body sa dokumentacijom
         body = {
             "name": "SP advertised product report",
-            "startDate": "2025-02-10",  # Hardkodiramo za test
-            "endDate": "2025-02-10",    # Hardkodiramo za test
+            "startDate": "2025-02-10",
+            "endDate": "2025-02-10",
             "configuration": {
                 "adProduct": "SPONSORED_PRODUCTS",
-                "groupBy": ["advertiser"],  # Samo "advertiser" je dozvoljen
+                "groupBy": ["advertiser"],
                 "columns": [
                     "campaignId",
                     "campaignName",
@@ -471,9 +488,11 @@ class AdvertisedProductReportStream(AmazonADsStream):
             }
         }
         
-        logger.info(f"Request URL: {url}")
-        logger.info(f"Request headers: {headers}")
-        logger.info(f"Request body: {body}")
+        logger.info("Request details:")
+        logger.info(f"URL: {url}")
+        logger.info(f"Method: {http_method}")
+        logger.info(f"Headers: {headers}")
+        logger.info(f"Body: {json.dumps(body, indent=2)}")
         
         request = requests.Request(
             method=http_method,
@@ -483,8 +502,12 @@ class AdvertisedProductReportStream(AmazonADsStream):
         )
         
         prepared_request = request.prepare()
-        logger.info(f"Prepared request headers: {prepared_request.headers}")
-        logger.info(f"Prepared request body: {prepared_request.body}")
+        logger.info("\n=== Prepared Request Details ===")
+        logger.info(f"Final URL: {prepared_request.url}")
+        logger.info(f"Final method: {prepared_request.method}")
+        logger.info(f"Final headers: {prepared_request.headers}")
+        logger.info(f"Final body: {prepared_request.body}")
+        logger.info("=== End Prepared Request Details ===\n")
         
         return prepared_request
 
