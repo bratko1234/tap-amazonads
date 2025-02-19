@@ -443,14 +443,14 @@ class AdvertisedProductReportStream(AmazonADsStream):
         url = self.get_url(context)
         headers = self.http_headers
         
-        # Usklađujemo body sa shemom i potrebnim poljima
+        # Usklađujemo body sa dokumentacijom
         body = {
             "name": "SP advertised product report",
             "startDate": "2025-02-10",  # Hardkodiramo za test
             "endDate": "2025-02-10",    # Hardkodiramo za test
             "configuration": {
                 "adProduct": "SPONSORED_PRODUCTS",
-                "groupBy": ["campaign", "adGroup", "advertiser"],  # Dodajemo sve potrebne groupBy
+                "groupBy": ["advertiser"],  # Samo "advertiser" je dozvoljen
                 "columns": [
                     "campaignId",
                     "campaignName",
