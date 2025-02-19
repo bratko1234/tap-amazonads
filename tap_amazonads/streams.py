@@ -352,38 +352,153 @@ class SearchTermReportStream(AmazonADsStream):
     primary_keys = ["campaignId", "date", "searchTerm"]
     replication_key = "date"
     schema_filepath = SCHEMAS_DIR / "search_term_reports.json"
-    #parent_stream_type = CampaignsStream
     method = "POST"
-    records_jsonpath = "$.rows[*]"
     
+    def __init__(self, *args, **kwargs):
+        """Initialize the stream."""
+        super().__init__(*args, **kwargs)
+        logger.info(f"Stream initialized with authenticator: {self.authenticator}")
+
+    def request_records(self, context: dict | None) -> t.Iterable[dict]:
+        """Request records from REST endpoint(s)."""
+        logger.info("\n=== Starting request_records ===")
+        
+        if not self.authenticator:
+            logger.error("No authenticator found!")
+            raise Exception("Authenticator not initialized")
+            
+        if not hasattr(self.authenticator, 'access_token'):
+            logger.error(f"Authenticator type: {type(self.authenticator)}")
+            logger.error(f"Authenticator attributes: {dir(self.authenticator)}")
+            raise Exception("Authenticator has no access_token attribute")
+            
+        access_token = self.authenticator.access_token
+        if not access_token:
+            logger.error("No access token available")
+            raise Exception("Access token not available")
+            
+        logger.info("Authentication check passed")
+        logger.info(f"Access token (first 20 chars): {access_token[:20]}...")
+        
+        prepared_request = self.prepare_request(context, None)
+        
+        # Logujemo kompletan request kao CURL komandu
+        curl_command = f"""
+curl --location --request {prepared_request.method} '{prepared_request.url}' \\
+--header 'Content-Type: {prepared_request.headers.get("Content-Type", "")}' \\
+--header 'Accept: {prepared_request.headers.get("Accept", "")}' \\
+--header 'Amazon-Advertising-API-ClientId: {prepared_request.headers.get("Amazon-Advertising-API-ClientId", "")}' \\
+--header 'Amazon-Advertising-API-Scope: {prepared_request.headers.get("Amazon-Advertising-API-Scope", "")}' \\
+--header 'Authorization: Bearer {access_token}' \\
+--data-raw '{prepared_request.body.decode() if prepared_request.body else ""}'
+"""
+        logger.info(f"Equivalent CURL command:\n{curl_command}")
+        
+        response = self._request(prepared_request, context)
+        
+        logger.info("\n=== Response Details ===")
+        logger.info(f"Response status code: {response.status_code}")
+        logger.info(f"Response headers: {dict(response.headers)}")
+        logger.info(f"Response body: {response.text}")
+        logger.info("=== End Response Details ===\n")
+        
+        if response.status_code != 200:
+            raise Exception(f"Report request failed: {response.text}")
+            
+        report_info = response.json()
+        logger.info(f"Successfully created report request: {report_info}")
+        
+        yield from []
+
+    def prepare_request(self, context: dict | None, next_page_token: t.Any | None) -> requests.PreparedRequest:
+        """Prepare a request object."""
+        logger.info("\n=== Preparing Request ===")
+        
+        http_method = self.method
+        url = self.get_url(context)
+        headers = self.http_headers
+        
+        body = {
+            "name": "SP search term report",
+            "startDate": "2025-02-10",
+            "endDate": "2025-02-10",
+            "configuration": {
+                "adProduct": "SPONSORED_PRODUCTS",
+                "groupBy": ["searchTerm"],
+                "columns": [
+                    "impressions",
+                    "clicks",
+                    "cost",
+                    "campaignId",
+                    "adGroupId",
+                    "date",
+                    "targeting",
+                    "searchTerm",
+                    "keywordType",
+                    "keywordId",
+                    "keyword",
+                    "matchType"
+                ],
+                "filters": [
+                    {
+                        "field": "keywordType",
+                        "values": [
+                            "BROAD",
+                            "PHRASE",
+                            "EXACT",
+                            "TARGETING_EXPRESSION",
+                            "TARGETING_EXPRESSION_PREDEFINED"
+                        ]
+                    }
+                ],
+                "reportTypeId": "spSearchTerm",
+                "timeUnit": "DAILY",
+                "format": "GZIP_JSON"
+            }
+        }
+        
+        logger.info("Request details:")
+        logger.info(f"URL: {url}")
+        logger.info(f"Method: {http_method}")
+        logger.info(f"Headers: {headers}")
+        logger.info(f"Body: {json.dumps(body, indent=2)}")
+        
+        request = requests.Request(
+            method=http_method,
+            url=url,
+            headers=headers,
+            json=body
+        )
+        
+        prepared_request = request.prepare()
+        logger.info("\n=== Prepared Request Details ===")
+        logger.info(f"Final URL: {prepared_request.url}")
+        logger.info(f"Final method: {prepared_request.method}")
+        logger.info(f"Final headers: {prepared_request.headers}")
+        logger.info(f"Final body: {prepared_request.body}")
+        logger.info("=== End Prepared Request Details ===\n")
+        
+        return prepared_request
+
     @property
     def http_headers(self) -> dict:
         """Return the http headers needed."""
-        headers = {
-            "Content-Type": "application/vnd.createasyncreport.v3+json",
-            "Accept": "application/vnd.createasyncreport.v3+json",
-        }
-        if "user_agent" in self.config:
-            headers["User-Agent"] = self.config.get("user_agent")
+        headers = super().http_headers
+        headers.update({
+            "Content-Type": "application/vnd.createasyncreportrequest.v3+json",
+            "Accept": "application/vnd.createasyncreportrequest.v3+json",
+            "Amazon-Advertising-API-ClientId": self.config["client_id"],
+            "Amazon-Advertising-API-Scope": self.config["profile_id"],
+        })
+        
+        logger.info("\n=== Headers Details ===")
+        safe_headers = headers.copy()
+        if 'Authorization' in safe_headers:
+            safe_headers['Authorization'] = safe_headers['Authorization'][:20] + '...'
+        logger.info(f"Complete headers: {json.dumps(safe_headers, indent=2)}")
+        logger.info("=== End Headers Details ===\n")
+        
         return headers
-
-    def get_request_body(self, context: dict | None, next_page_token: t.Any | None) -> dict:
-        """Return a dictionary to be sent in the request body."""
-        return {
-            "reportType": "searchTerm",
-            "configuration": {
-                "adProduct": "SPONSORED_PRODUCTS",
-                "groupBy": ["searchTerm", "campaignId", "adGroupId"],
-                "timeUnit": "DAILY",
-                "format": "JSON"
-            },
-            "startDate": self.get_starting_timestamp(context),
-            "endDate": self.get_ending_timestamp(context)
-        }
-
-    def get_path(self, context: dict | None) -> str:
-        """Return the API endpoint path."""
-        return "/reporting/reports"
 
 
 class AdvertisedProductReportStream(AmazonADsStream):
@@ -539,41 +654,146 @@ class PurchasedProductReportStream(AmazonADsStream):
     
     name = "purchased_product_reports"
     path = "/reporting/reports"
-    primary_keys = ["campaignId", "date", "asin"]
+    primary_keys = ["campaignId", "date", "purchasedAsin"]
     replication_key = "date"
     schema_filepath = SCHEMAS_DIR / "purchased_product_reports.json"
-    #parent_stream_type = CampaignsStream
     method = "POST"
-    records_jsonpath = "$.rows[*]"
     
+    def __init__(self, *args, **kwargs):
+        """Initialize the stream."""
+        super().__init__(*args, **kwargs)
+        logger.info(f"Stream initialized with authenticator: {self.authenticator}")
+
+    def request_records(self, context: dict | None) -> t.Iterable[dict]:
+        """Request records from REST endpoint(s)."""
+        logger.info("\n=== Starting request_records ===")
+        
+        if not self.authenticator:
+            logger.error("No authenticator found!")
+            raise Exception("Authenticator not initialized")
+            
+        if not hasattr(self.authenticator, 'access_token'):
+            logger.error(f"Authenticator type: {type(self.authenticator)}")
+            logger.error(f"Authenticator attributes: {dir(self.authenticator)}")
+            raise Exception("Authenticator has no access_token attribute")
+            
+        access_token = self.authenticator.access_token
+        if not access_token:
+            logger.error("No access token available")
+            raise Exception("Access token not available")
+            
+        logger.info("Authentication check passed")
+        logger.info(f"Access token (first 20 chars): {access_token[:20]}...")
+        
+        prepared_request = self.prepare_request(context, None)
+        
+        # Logujemo kompletan request kao CURL komandu
+        curl_command = f"""
+curl --location --request {prepared_request.method} '{prepared_request.url}' \\
+--header 'Content-Type: {prepared_request.headers.get("Content-Type", "")}' \\
+--header 'Accept: {prepared_request.headers.get("Accept", "")}' \\
+--header 'Amazon-Advertising-API-ClientId: {prepared_request.headers.get("Amazon-Advertising-API-ClientId", "")}' \\
+--header 'Amazon-Advertising-API-Scope: {prepared_request.headers.get("Amazon-Advertising-API-Scope", "")}' \\
+--header 'Authorization: Bearer {access_token}' \\
+--data-raw '{prepared_request.body.decode() if prepared_request.body else ""}'
+"""
+        logger.info(f"Equivalent CURL command:\n{curl_command}")
+        
+        response = self._request(prepared_request, context)
+        
+        logger.info("\n=== Response Details ===")
+        logger.info(f"Response status code: {response.status_code}")
+        logger.info(f"Response headers: {dict(response.headers)}")
+        logger.info(f"Response body: {response.text}")
+        logger.info("=== End Response Details ===\n")
+        
+        if response.status_code != 200:
+            raise Exception(f"Report request failed: {response.text}")
+            
+        report_info = response.json()
+        logger.info(f"Successfully created report request: {report_info}")
+        
+        yield from []
+
+    def prepare_request(self, context: dict | None, next_page_token: t.Any | None) -> requests.PreparedRequest:
+        """Prepare a request object."""
+        logger.info("\n=== Preparing Request ===")
+        
+        http_method = self.method
+        url = self.get_url(context)
+        headers = self.http_headers
+        
+        body = {
+            "name": "SP purchased product report",
+            "startDate": "2025-02-10",
+            "endDate": "2025-02-10",
+            "configuration": {
+                "adProduct": "SPONSORED_PRODUCTS",
+                "groupBy": ["asin"],
+                "columns": [
+                    "date",
+                    "campaignId",
+                    "campaignName",
+                    "adGroupId",
+                    "adGroupName",
+                    "keywordId",
+                    "keyword",
+                    "keywordType",
+                    "advertisedAsin",
+                    "purchasedAsin",
+                    "advertisedSku",
+                    "sales14d",
+                    "purchases14d",
+                    "unitsSoldClicks14d"
+                ],
+                "reportTypeId": "spPurchasedProduct",
+                "timeUnit": "SUMMARY",
+                "format": "GZIP_JSON"
+            }
+        }
+        
+        logger.info("Request details:")
+        logger.info(f"URL: {url}")
+        logger.info(f"Method: {http_method}")
+        logger.info(f"Headers: {headers}")
+        logger.info(f"Body: {json.dumps(body, indent=2)}")
+        
+        request = requests.Request(
+            method=http_method,
+            url=url,
+            headers=headers,
+            json=body
+        )
+        
+        prepared_request = request.prepare()
+        logger.info("\n=== Prepared Request Details ===")
+        logger.info(f"Final URL: {prepared_request.url}")
+        logger.info(f"Final method: {prepared_request.method}")
+        logger.info(f"Final headers: {prepared_request.headers}")
+        logger.info(f"Final body: {prepared_request.body}")
+        logger.info("=== End Prepared Request Details ===\n")
+        
+        return prepared_request
+
     @property
     def http_headers(self) -> dict:
         """Return the http headers needed."""
-        headers = {
-            "Content-Type": "application/vnd.createasyncreport.v3+json",
-            "Accept": "application/vnd.createasyncreport.v3+json",
-        }
-        if "user_agent" in self.config:
-            headers["User-Agent"] = self.config.get("user_agent")
+        headers = super().http_headers
+        headers.update({
+            "Content-Type": "application/vnd.createasyncreportrequest.v3+json",
+            "Accept": "application/vnd.createasyncreportrequest.v3+json",
+            "Amazon-Advertising-API-ClientId": self.config["client_id"],
+            "Amazon-Advertising-API-Scope": self.config["profile_id"],
+        })
+        
+        logger.info("\n=== Headers Details ===")
+        safe_headers = headers.copy()
+        if 'Authorization' in safe_headers:
+            safe_headers['Authorization'] = safe_headers['Authorization'][:20] + '...'
+        logger.info(f"Complete headers: {json.dumps(safe_headers, indent=2)}")
+        logger.info("=== End Headers Details ===\n")
+        
         return headers
-
-    def get_request_body(self, context: dict | None, next_page_token: t.Any | None) -> dict:
-        """Return a dictionary to be sent in the request body."""
-        return {
-            "reportType": "purchasedProduct",
-            "configuration": {
-                "adProduct": "SPONSORED_PRODUCTS",
-                "groupBy": ["asin", "campaignId", "adGroupId"],
-                "timeUnit": "DAILY",
-                "format": "JSON"
-            },
-            "startDate": self.get_starting_timestamp(context),
-            "endDate": self.get_ending_timestamp(context)
-        }
-
-    def get_path(self, context: dict | None) -> str:
-        """Return the API endpoint path."""
-        return "/reporting/reports"
 
 
 class GrossAndInvalidTrafficReportStream(AmazonADsStream):
@@ -585,33 +805,138 @@ class GrossAndInvalidTrafficReportStream(AmazonADsStream):
     replication_key = "date"
     schema_filepath = SCHEMAS_DIR / "gross_and_invalid_traffic_reports.json"
     method = "POST"
-    records_jsonpath = "$.rows[*]"
     
+    def __init__(self, *args, **kwargs):
+        """Initialize the stream."""
+        super().__init__(*args, **kwargs)
+        logger.info(f"Stream initialized with authenticator: {self.authenticator}")
+
+    def request_records(self, context: dict | None) -> t.Iterable[dict]:
+        """Request records from REST endpoint(s)."""
+        logger.info("\n=== Starting request_records ===")
+        
+        if not self.authenticator:
+            logger.error("No authenticator found!")
+            raise Exception("Authenticator not initialized")
+            
+        if not hasattr(self.authenticator, 'access_token'):
+            logger.error(f"Authenticator type: {type(self.authenticator)}")
+            logger.error(f"Authenticator attributes: {dir(self.authenticator)}")
+            raise Exception("Authenticator has no access_token attribute")
+            
+        access_token = self.authenticator.access_token
+        if not access_token:
+            logger.error("No access token available")
+            raise Exception("Access token not available")
+            
+        logger.info("Authentication check passed")
+        logger.info(f"Access token (first 20 chars): {access_token[:20]}...")
+        
+        prepared_request = self.prepare_request(context, None)
+        
+        # Logujemo kompletan request kao CURL komandu
+        curl_command = f"""
+curl --location --request {prepared_request.method} '{prepared_request.url}' \\
+--header 'Content-Type: {prepared_request.headers.get("Content-Type", "")}' \\
+--header 'Accept: {prepared_request.headers.get("Accept", "")}' \\
+--header 'Amazon-Advertising-API-ClientId: {prepared_request.headers.get("Amazon-Advertising-API-ClientId", "")}' \\
+--header 'Amazon-Advertising-API-Scope: {prepared_request.headers.get("Amazon-Advertising-API-Scope", "")}' \\
+--header 'Authorization: Bearer {access_token}' \\
+--data-raw '{prepared_request.body.decode() if prepared_request.body else ""}'
+"""
+        logger.info(f"Equivalent CURL command:\n{curl_command}")
+        
+        response = self._request(prepared_request, context)
+        
+        logger.info("\n=== Response Details ===")
+        logger.info(f"Response status code: {response.status_code}")
+        logger.info(f"Response headers: {dict(response.headers)}")
+        logger.info(f"Response body: {response.text}")
+        logger.info("=== End Response Details ===\n")
+        
+        if response.status_code != 200:
+            raise Exception(f"Report request failed: {response.text}")
+            
+        report_info = response.json()
+        logger.info(f"Successfully created report request: {report_info}")
+        
+        yield from []
+
+    def prepare_request(self, context: dict | None, next_page_token: t.Any | None) -> requests.PreparedRequest:
+        """Prepare a request object."""
+        logger.info("\n=== Preparing Request ===")
+        
+        http_method = self.method
+        url = self.get_url(context)
+        headers = self.http_headers
+        
+        body = {
+            "name": "SP Gross and Invalid Traffic",
+            "startDate": "2025-02-10",
+            "endDate": "2025-02-10",
+            "configuration": {
+                "adProduct": "SPONSORED_PRODUCTS",
+                "groupBy": ["campaign"],
+                "columns": [
+                    "campaignName",
+                    "campaignStatus",
+                    "clicks",
+                    "date",
+                    "endDate",
+                    "grossClickThroughs",
+                    "grossImpressions",
+                    "impressions",
+                    "invalidClickThroughRate",
+                    "invalidClickThroughs",
+                    "invalidImpressionRate",
+                    "invalidImpressions",
+                    "startDate"
+                ],
+                "reportTypeId": "spGrossAndInvalids",
+                "timeUnit": "SUMMARY",
+                "format": "GZIP_JSON"
+            }
+        }
+        
+        logger.info("Request details:")
+        logger.info(f"URL: {url}")
+        logger.info(f"Method: {http_method}")
+        logger.info(f"Headers: {headers}")
+        logger.info(f"Body: {json.dumps(body, indent=2)}")
+        
+        request = requests.Request(
+            method=http_method,
+            url=url,
+            headers=headers,
+            json=body
+        )
+        
+        prepared_request = request.prepare()
+        logger.info("\n=== Prepared Request Details ===")
+        logger.info(f"Final URL: {prepared_request.url}")
+        logger.info(f"Final method: {prepared_request.method}")
+        logger.info(f"Final headers: {prepared_request.headers}")
+        logger.info(f"Final body: {prepared_request.body}")
+        logger.info("=== End Prepared Request Details ===\n")
+        
+        return prepared_request
+
     @property
     def http_headers(self) -> dict:
         """Return the http headers needed."""
-        headers = {
-            "Content-Type": "application/vnd.createasyncreport.v3+json",
-            "Accept": "application/vnd.createasyncreport.v3+json",
-        }
-        if "user_agent" in self.config:
-            headers["User-Agent"] = self.config.get("user_agent")
+        headers = super().http_headers
+        headers.update({
+            "Content-Type": "application/vnd.createasyncreportrequest.v3+json",
+            "Accept": "application/vnd.createasyncreportrequest.v3+json",
+            "Amazon-Advertising-API-ClientId": self.config["client_id"],
+            "Amazon-Advertising-API-Scope": self.config["profile_id"],
+        })
+        
+        logger.info("\n=== Headers Details ===")
+        safe_headers = headers.copy()
+        if 'Authorization' in safe_headers:
+            safe_headers['Authorization'] = safe_headers['Authorization'][:20] + '...'
+        logger.info(f"Complete headers: {json.dumps(safe_headers, indent=2)}")
+        logger.info("=== End Headers Details ===\n")
+        
         return headers
-
-    def get_request_body(self, context: dict | None, next_page_token: t.Any | None) -> dict:
-        """Return a dictionary to be sent in the request body."""
-        return {
-            "reportType": "grossAndInvalidTraffic",
-            "configuration": {
-                "adProduct": "SPONSORED_PRODUCTS",
-                "groupBy": ["campaignId", "adGroupId"],
-                "timeUnit": "DAILY",
-                "format": "JSON"
-            },
-            "startDate": self.get_starting_timestamp(context),
-            "endDate": self.get_ending_timestamp(context)
-        }
-
-    def get_path(self, context: dict | None) -> str:
-        """Return the API endpoint path."""
-        return "/reporting/reports"
