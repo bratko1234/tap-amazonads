@@ -1,14 +1,12 @@
 """AmazonADs tap class."""
 
 from __future__ import annotations
-import logging
+
 from singer_sdk import Tap
 from singer_sdk import typing as th
 from typing import List
 
 from tap_amazonads import streams
-
-logger = logging.getLogger(__name__)
 
 STREAM_TYPES = [
     streams.CampaignsStream,
@@ -58,28 +56,36 @@ class TapAmazonADs(Tap):
             th.DateTimeType,
             description="The earliest record date to sync",
         ),
+        # Opcionalno: dodaj _select u JSON schemu ako želiš eksplicitno ga definisati
+        th.Property(
+            "_select",
+            th.ArrayType(th.StringType),
+            description="Selection extra for filtering streams",
+            default=["*.*"],
+        ),
     ).to_dict()
 
     @property
-    def selected_stream_names(self) -> list[str]:
-        """Extract stream names from selection patterns."""
+    def selected(self) -> list[str]:
+        """Vraća listu selektovanih entiteta (iz _select extra)."""
+        return self.config.get("_select", ["*.*"])
+
+    @property
+    def selected_streams(self) -> list[str]:
+        """Izvlači imena odabranih streamova iz `selected`.
+
+        Pretpostavljamo da su vrijednosti u formatu "stream_name.column_name".
+        """
         if not self.selected:
             return []
-        # Extract unique stream names (part before the dot)
-        stream_names = {s.split('.')[0] for s in self.selected if '.' in s}
-        logger.info(f"Extracted stream names from selection: {stream_names}")
-        return list(stream_names)
+        # Izvući jedinstvena imena streamova (deo pre tačke)
+        return list({s.split('.')[0] for s in self.selected if '.' in s})
 
     def discover_streams(self) -> List[streams.AmazonADsStream]:
-        """Return a list of discovered streams."""
         all_streams = [stream_class(tap=self) for stream_class in STREAM_TYPES]
-        
-        selected_names = self.selected_stream_names
-        if selected_names:
-            logger.info(f"Filtering streams to: {selected_names}")
-            return [s for s in all_streams if s.name in selected_names]
-            
-        logger.info("No stream selection - returning all streams")
+        # Ako postoji filtriranje streamova, vrati samo one čije ime je odabrano
+        if self.selected_streams:
+            return [s for s in all_streams if s.name in self.selected_streams]
         return all_streams
 
 if __name__ == "__main__":
