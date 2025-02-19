@@ -7,7 +7,6 @@ from pathlib import Path
 from singer_sdk import typing as th
 import requests
 import logging
-import time
 
 from tap_amazonads.client import AmazonADsStream
 
@@ -403,75 +402,38 @@ class AdvertisedProductReportStream(AmazonADsStream):
 
     def request_records(self, context: dict | None) -> t.Iterable[dict]:
         """Request records from REST endpoint(s)."""
-        # Autentifikacijske provjere...
+        if not self.authenticator:
+            logger.error("No authenticator found!")
+            raise Exception("Authenticator not initialized")
+            
+        if not hasattr(self.authenticator, 'access_token'):
+            logger.error(f"Authenticator type: {type(self.authenticator)}")
+            logger.error(f"Authenticator attributes: {dir(self.authenticator)}")
+            raise Exception("Authenticator has no access_token attribute")
+            
+        access_token = self.authenticator.access_token
+        if not access_token:
+            logger.error("No access token available")
+            raise Exception("Access token not available")
+            
+        logger.info("Authentication check passed, proceeding with request")
         
-        # 1. Kreiramo report request
-        logger.info("Creating report request...")
+        # Kreiramo report request
         prepared_request = self.prepare_request(context, None)
         response = self._request(prepared_request, context)
+        
+        logger.info(f"Response status code: {response.status_code}")
+        logger.info(f"Response headers: {dict(response.headers)}")
+        logger.info(f"Response body: {response.text}")
         
         if response.status_code != 200:
             raise Exception(f"Report request failed: {response.text}")
             
         report_info = response.json()
-        logger.info(f"Report request response: {report_info}")
+        logger.info(f"Successfully created report request: {report_info}")
         
-        report_id = report_info.get("reportId")
-        if not report_id:
-            raise Exception("No reportId in response")
-            
-        # 2. Čekamo da report bude spreman
-        while True:
-            logger.info(f"Checking status for report {report_id}")
-            status_url = f"{self.path}/{report_id}"
-            
-            status_request = requests.Request(
-                method="GET",
-                url=self.get_url(context) + f"/{report_id}",
-                headers=self.http_headers
-            ).prepare()
-            
-            status_response = self._request(status_request, context)
-            status_info = status_response.json()
-            
-            logger.info(f"Report status: {status_info.get('status')}")
-            
-            if status_info.get('status') == 'COMPLETED':
-                # Report je spreman, preuzimamo ga
-                if not status_info.get('url'):
-                    raise Exception("No download URL in completed report")
-                    
-                # TODO: Implementirati preuzimanje i parsiranje GZIP JSON-a
-                # Za sada samo logiramo URL
-                logger.info(f"Report ready at URL: {status_info['url']}")
-                break
-                
-            elif status_info.get('status') == 'FAILED':
-                raise Exception(f"Report generation failed: {status_info.get('failureReason')}")
-                
-            # Čekamo prije sljedećeg pokušaja
-            time.sleep(5)
-            
-        # TODO: Implementirati preuzimanje i parsiranje reporta
-        yield from []  # Privremeno vraćamo prazan iterator
-
-    def get_starting_date(self, context: dict | None) -> str:
-        """Get starting date in YYYY-MM-DD format."""
-        if context and "start_date" in context:
-            return context["start_date"]
-        # Koristimo state ako postoji
-        state = self.get_context_state(context)
-        if state and self.replication_key in state:
-            return state[self.replication_key]
-        # Inače koristimo default start date
-        return "2025-02-10"  # Možemo postaviti neki default datum
-
-    def get_ending_date(self, context: dict | None) -> str:
-        """Get ending date in YYYY-MM-DD format."""
-        if context and "end_date" in context:
-            return context["end_date"]
-        # Za end date koristimo današnji datum
-        return "2025-02-10"  # Možemo postaviti neki default datum
+        # Za sada samo vraćamo prazan iterator
+        yield from []
 
     def prepare_request(self, context: dict | None, next_page_token: t.Any | None) -> requests.PreparedRequest:
         """Prepare a request object."""
@@ -481,25 +443,36 @@ class AdvertisedProductReportStream(AmazonADsStream):
         url = self.get_url(context)
         headers = self.http_headers
         
-        start_date = self.get_starting_date(context)
-        end_date = self.get_ending_date(context)
-        
-        logger.info(f"Date range: {start_date} to {end_date}")
-        
+        # Usklađujemo body sa shemom i potrebnim poljima
         body = {
-            "name": f"SP advertised product report {start_date}-{end_date}",
-            "startDate": start_date,
-            "endDate": end_date,
+            "name": "SP advertised product report",
+            "startDate": "2025-02-10",  # Hardkodiramo za test
+            "endDate": "2025-02-10",    # Hardkodiramo za test
             "configuration": {
                 "adProduct": "SPONSORED_PRODUCTS",
-                "groupBy": ["advertiser"],
-                "columns": ["impressions", "clicks", "cost", "campaignId", "advertisedAsin"],
+                "groupBy": ["campaign", "adGroup", "advertiser"],  # Dodajemo sve potrebne groupBy
+                "columns": [
+                    "campaignId",
+                    "campaignName",
+                    "adGroupId",
+                    "adGroupName",
+                    "advertisedAsin",
+                    "advertisedSku",
+                    "impressions",
+                    "clicks",
+                    "cost",
+                    "purchases14d",
+                    "sales14d",
+                    "unitsSoldClicks14d"
+                ],
                 "reportTypeId": "spAdvertisedProduct",
                 "timeUnit": "SUMMARY",
                 "format": "GZIP_JSON"
             }
         }
         
+        logger.info(f"Request URL: {url}")
+        logger.info(f"Request headers: {headers}")
         logger.info(f"Request body: {body}")
         
         request = requests.Request(
@@ -515,9 +488,15 @@ class AdvertisedProductReportStream(AmazonADsStream):
         
         return prepared_request
 
-    def get_path(self, context: dict | None) -> str:
-        """Return the API endpoint path."""
-        return "/reporting/reports"
+    @property
+    def http_headers(self) -> dict:
+        """Return the http headers needed."""
+        headers = super().http_headers
+        headers.update({
+            "Content-Type": "application/vnd.createasyncreportrequest.v3+json",
+            "Accept": "application/vnd.createasyncreportrequest.v3+json",
+        })
+        return headers
 
 
 class PurchasedProductReportStream(AmazonADsStream):
