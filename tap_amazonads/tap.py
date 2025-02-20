@@ -25,6 +25,7 @@ class TapAmazonADs(Tap):
     """AmazonADs tap class."""
     
     name = "tap-amazonads"
+    capabilities = ["catalog", "discover"]
 
     config_jsonschema = th.PropertiesList(
         th.Property(
