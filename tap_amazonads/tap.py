@@ -19,6 +19,7 @@ STREAM_TYPES = [
     streams.AdvertisedProductReportStream,
     streams.PurchasedProductReportStream,
     streams.GrossAndInvalidTrafficReportStream,
+    streams.CampaignReportStream,
 ]
 
 class TapAmazonADs(Tap):
