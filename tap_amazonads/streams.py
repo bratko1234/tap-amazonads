@@ -29,7 +29,7 @@ class BaseReportStream(AmazonADsStream):
         headers = {
             "Content-Type": "application/json",
             "Amazon-Advertising-API-ClientId": self.config["client_id"],
-            "Amazon-Advertising-API-Scope": self.config["scope"],
+            "Amazon-Advertising-API-Scope": self.config["profile_id"],
             "Authorization": f"Bearer {self.authenticator.access_token}"
         }
         
