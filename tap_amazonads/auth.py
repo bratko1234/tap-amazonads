@@ -22,12 +22,12 @@ class AmazonADsAuthenticator:
         Args:
             config: The tap config object
         """
+        self.logger.info("=== Starting AmazonADsAuthenticator initialization ===")
         self._config = config
         self._access_token = None
         self._token_expiry = None
         self.logger = logging.getLogger(__name__)
         
-        self.logger.info("Starting AmazonADsAuthenticator initialization")
         self.logger.info(f"Config keys available: {list(config.keys())}")
         
         # Required config keys
@@ -44,7 +44,14 @@ class AmazonADsAuthenticator:
                 raise Exception(f"Missing required config key: {key}")
         
         self.refresh_access_token()
-        self.logger.info("AmazonADsAuthenticator initialized")
+        self.logger.info(f"After refresh, access token (first 20 chars): {self._access_token[:20] if self._access_token else 'None'}")
+        self.logger.info("=== AmazonADsAuthenticator initialization complete ===")
+
+    @property
+    def access_token(self) -> str:
+        """Return the current access token."""
+        self.logger.info(f"Access token requested, current value (first 20 chars): {self._access_token[:20] if self._access_token else 'None'}")
+        return self._access_token
 
     def refresh_access_token(self):
         """Refresh access token."""
@@ -77,8 +84,12 @@ class AmazonADsAuthenticator:
         Returns:
             A new authenticator instance
         """
-        # We only need the config from the stream
-        return cls(stream.config)
+        logger.info("=== Creating new authenticator for stream ===")
+        logger.info(f"Stream type: {type(stream)}")
+        logger.info(f"Stream config: {stream.config}")
+        auth = cls(stream.config)
+        logger.info(f"New authenticator created with access token (first 20 chars): {auth.access_token[:20] if auth.access_token else 'None'}")
+        return auth
 
     def get_auth_headers(self):
         """Get the authentication headers."""

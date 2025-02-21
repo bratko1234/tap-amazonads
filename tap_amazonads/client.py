@@ -90,9 +90,12 @@ class AmazonADsStream(RESTStream):
             tap: The parent tap instance
         """
         super().__init__(tap=tap)
-        self.tap = tap  # Explicitly store tap reference
+        self.tap = tap
+        self.logger.info(f"=== Initializing {self.name} stream ===")
+        self.logger.info(f"Tap instance: {tap}")
         if tap:
-            logger.info(f"Base stream {self.name} initialized with tap config: {tap.config}")
+            self.logger.info(f"Tap config: {tap.config}")
+        self.logger.info(f"Initial authenticator: {self.authenticator}")
 
     # Common settings for all streams
     records_jsonpath = "$.data[*]"  # Amazon Ads API typically returns data in a 'data' field
@@ -123,9 +126,13 @@ class AmazonADsStream(RESTStream):
     @cached_property
     def authenticator(self):
         """Return a new authenticator object."""
+        self.logger.info(f"=== Getting authenticator for {self.name} stream ===")
         if not self.tap:
             raise Exception(f"Stream {self.name} has no tap instance")
-        return AmazonADsAuthenticator.create_for_stream(self)
+        auth = AmazonADsAuthenticator.create_for_stream(self)
+        self.logger.info(f"Created authenticator: {auth}")
+        self.logger.info(f"Authenticator access token (first 20 chars): {auth.access_token[:20] if hasattr(auth, 'access_token') else 'None'}")
+        return auth
 
     def get_new_paginator(self) -> AmazonAdsPaginator:
         """Create a new pagination helper instance.

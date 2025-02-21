@@ -66,8 +66,11 @@ class TapAmazonADs(Tap):
     @property
     def authenticator(self) -> AmazonADsAuthenticator:
         """Return a new authenticator."""
+        logger.info("=== Getting tap authenticator ===")
         if not hasattr(self, '_authenticator'):
+            logger.info("Creating new tap authenticator")
             self._authenticator = AmazonADsAuthenticator.create_for_stream(self)
+            logger.info(f"Created new authenticator with access token (first 20 chars): {self._authenticator.access_token[:20] if hasattr(self._authenticator, 'access_token') else 'None'}")
         return self._authenticator
 
     def discover_streams(self) -> List[streams.AmazonADsStream]:
