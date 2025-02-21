@@ -954,6 +954,12 @@ class CampaignReportStream(AmazonADsStream):
     method = "POST"
     records_jsonpath = "$.reports[*]"
     
+    def __init__(self, *args, **kwargs):
+        """Initialize the stream."""
+        super().__init__(*args, **kwargs)
+        self._authenticator = None  # Dodajemo inicijalizaciju
+        logger.info(f"Stream initialized with authenticator: {self.authenticator}")
+
     @property
     def authenticator(self) -> AmazonADsAuthenticator:
         """Return a new authenticator object."""
