@@ -7,6 +7,7 @@ from singer_sdk import typing as th
 from typing import List
 
 from tap_amazonads import streams
+from tap_amazonads.auth import AmazonADsAuthenticator
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +62,13 @@ class TapAmazonADs(Tap):
             description="The earliest record date to sync",
         ),
     ).to_dict()
+
+    @property
+    def authenticator(self) -> AmazonADsAuthenticator:
+        """Return a new authenticator."""
+        if not hasattr(self, '_authenticator'):
+            self._authenticator = AmazonADsAuthenticator.create_for_stream(self)
+        return self._authenticator
 
     def discover_streams(self) -> List[streams.AmazonADsStream]:
         """Return a list of discovered streams.
