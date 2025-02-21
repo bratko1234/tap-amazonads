@@ -17,7 +17,11 @@ class AmazonADsAuthenticator:
     """Authenticator for Amazon Ads."""
 
     def __init__(self, config):
-        """Initialize authenticator."""
+        """Initialize authenticator.
+        
+        Args:
+            config: The tap config object
+        """
         self._config = config
         self._access_token = None
         self._token_expiry = None
@@ -64,21 +68,17 @@ class AmazonADsAuthenticator:
         self._token_expiry = datetime.now() + timedelta(seconds=response_json["expires_in"] - 300)  # 5 min buffer
         
     @classmethod
-    def create_for_stream(cls, stream) -> "AmazonADsAuthenticator":
-        """Create a new authenticator for the given stream."""
-        logger.info(f"Creating authenticator for stream: {stream.name}")
+    def create_for_stream(cls, stream):
+        """Create a new authenticator for the given stream.
         
-        if not hasattr(stream, 'tap') or not stream.tap:
-            raise Exception("Stream must have a tap instance")
-        
-        logger.info(f"Stream config: {stream.config}")
-        logger.info(f"Stream tap config: {stream.tap.config}")
-        
-        auth = cls(
-            stream.tap.config.get("auth_endpoint"),
-            stream.tap.config  # Pass the tap's config instead of stream config
-        )
-        return auth
+        Args:
+            stream: The stream instance requiring authentication
+            
+        Returns:
+            A new authenticator instance
+        """
+        # We only need the config from the stream
+        return cls(stream.config)
 
     def get_auth_headers(self):
         """Get the authentication headers."""
