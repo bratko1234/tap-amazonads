@@ -964,7 +964,15 @@ class CampaignReportStream(AmazonADsStream):
     def authenticator(self) -> AmazonADsAuthenticator:
         """Return a new authenticator object."""
         if not self._authenticator:
-            self._authenticator = AmazonADsAuthenticator.create_for_stream(self)
+            logger.info("Creating new authenticator for stream")
+            logger.info(f"Stream config keys: {list(self.config.keys())}")
+            logger.info(f"Stream config values: {self.config}")
+            logger.info(f"Parent tap config keys: {list(self.tap.config.keys())}")
+            logger.info(f"Parent tap config values: {self.tap.config}")
+            
+            self._authenticator = AmazonADsAuthenticator(self.config)
+            logger.info(f"Created new authenticator: {type(self._authenticator)}")
+            logger.info(f"Authenticator attributes: {dir(self._authenticator)}")
         return self._authenticator
 
     def request_records(self, context: dict | None) -> t.Iterable[dict]:

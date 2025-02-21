@@ -13,66 +13,77 @@ logger = logging.getLogger(__name__)
 
 # The SingletonMeta metaclass makes your streams reuse the same authenticator instance.
 # If this behaviour interferes with your use-case, you can remove the metaclass.
-class AmazonADsAuthenticator(OAuthAuthenticator, metaclass=SingletonMeta):
-    """Authenticator class for Amazon Ads API."""
+class AmazonADsAuthenticator:
+    """Authenticator for Amazon Ads."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, config):
         """Initialize authenticator."""
-        self._config = kwargs
+        self._config = config
         self._access_token = None
         self._token_expiry = None
         self.logger = logging.getLogger(__name__)
         
         self.logger.info("Starting AmazonADsAuthenticator initialization")
-        self.logger.info(f"Config keys available: {list(kwargs.keys())}")
+        self.logger.info(f"Config keys available: {list(config.keys())}")
+        
+        # Required config keys
+        required_keys = [
+            'refresh_token',
+            'client_id',
+            'client_secret',
+            'profile_id'
+        ]
         
         # Validate required config
-        required_keys = ['refresh_token', 'client_id', 'client_secret']
         for key in required_keys:
-            if key not in kwargs:
+            if key not in config:
                 raise Exception(f"Missing required config key: {key}")
         
-        # Initialize with a fresh token
         self.refresh_access_token()
         self.logger.info("AmazonADsAuthenticator initialized")
 
     def refresh_access_token(self):
-        """Refresh the access token using the refresh token."""
-        token_url = 'https://api.amazon.com/auth/o2/token'
+        """Refresh access token."""
+        url = "https://api.amazon.com/auth/o2/token"
         data = {
-            'grant_type': 'refresh_token',
-            'refresh_token': self._config['refresh_token'],
-            'client_id': self._config['client_id'],
-            'client_secret': self._config['client_secret']
+            "grant_type": "refresh_token",
+            "refresh_token": self._config["refresh_token"],
+            "client_id": self._config["client_id"],
+            "client_secret": self._config["client_secret"],
         }
         headers = {
-            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
         }
         
-        try:
-            response = requests.post(token_url, data=data, headers=headers)
-            response.raise_for_status()
-            token_data = response.json()
-            
-            self._access_token = token_data['access_token']
-            self._token_expiry = datetime.now() + timedelta(seconds=token_data['expires_in'] - 300)  # Buffer of 5 minutes
-            
-            self.logger.info("Successfully refreshed access token")
-        except Exception as e:
-            self.logger.error(f"Failed to refresh access token: {str(e)}")
-            raise
-
-    def get_access_token(self):
-        """Get the current access token, refreshing if necessary."""
-        if not self._access_token or (self._token_expiry and datetime.now() >= self._token_expiry):
-            self.refresh_access_token()
-        return self._access_token
+        response = requests.post(url, data=data, headers=headers)
+        if response.status_code != 200:
+            raise Exception(f"Failed to refresh token: {response.text}")
+        
+        response_json = response.json()
+        self._access_token = response_json["access_token"]
+        self._token_expiry = datetime.now() + timedelta(seconds=response_json["expires_in"] - 300)  # 5 min buffer
+        
+    @classmethod
+    def create_for_stream(cls, stream) -> "AmazonADsAuthenticator":
+        """Create a new authenticator for the given stream."""
+        logger.info(f"Creating authenticator for stream: {stream.name}")
+        logger.info(f"Stream config: {stream.config}")
+        logger.info(f"Stream tap config: {stream.tap.config}")
+        
+        auth = cls(
+            stream.config.get("auth_endpoint"),
+            stream.config
+        )
+        return auth
 
     def get_auth_headers(self):
         """Get the authentication headers."""
+        if not self._access_token or (self._token_expiry and datetime.now() >= self._token_expiry):
+            self.refresh_access_token()
+            
         return {
-            "Authorization": f"Bearer {self.get_access_token()}",
-            "Amazon-Advertising-API-ClientId": self._config['client_id'],
+            "Authorization": f"Bearer {self._access_token}",
+            "Amazon-Advertising-API-ClientId": self._config["client_id"],
             "Content-Type": "application/json"
         }
 
@@ -105,25 +116,6 @@ class AmazonADsAuthenticator(OAuthAuthenticator, metaclass=SingletonMeta):
             logger.error(f"Token refresh failed: {str(e)}")
             logger.error(f"Response content: {token_response.text if 'token_response' in locals() else 'No response'}")
             raise
-
-    @classmethod
-    def create_for_stream(cls, stream) -> AmazonADsAuthenticator:
-        """Create a new authenticator for the Amazon Ads API.
-
-        Args:
-            stream: The Singer stream instance.
-
-        Returns:
-            A new authenticator instance.
-        """
-        logger.info("Creating new authenticator for stream")
-        auth = cls(
-            stream=stream,
-            auth_endpoint="https://api.amazon.com/auth/o2/token",
-            oauth_scopes="advertising::campaign_management"
-        )
-        logger.info("New authenticator created successfully")
-        return auth
 
     def get_auth_params(self, context: dict | None = None) -> dict[str, Any]:
         """Get auth headers for the Amazon Ads API.
