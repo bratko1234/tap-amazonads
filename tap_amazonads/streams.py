@@ -806,7 +806,8 @@ curl --location --request {prepared_request.method} '{prepared_request.url}' \\
                 "adProduct": "SPONSORED_PRODUCTS",
                 "groupBy": ["asin"],
                 "columns": [
-                    "date",
+                    "startDate",
+                    "endDate",
                     "campaignId",
                     "campaignName",
                     "adGroupId",
