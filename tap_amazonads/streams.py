@@ -19,6 +19,48 @@ SCHEMAS_DIR = Path(__file__).parent / "schemas"
 
 logger = logging.getLogger(__name__)
 
+class BaseReportStream(AmazonADsStream):
+    """Base class for all report streams."""
+
+    def get_report_status(self, report_id: str) -> dict:
+        """Get the status of a report."""
+        time.sleep(2)  # Kratka pauza prije poziva
+        return self._request(
+            "GET",
+            f"/reporting/reports/{report_id}",
+        ).json()
+
+    def process_report(self, report_info: dict) -> t.Iterable[dict]:
+        """Process report after initial creation."""
+        report_id = report_info["reportId"]
+        max_attempts = 10
+        attempt = 0
+        initial_wait = 30  # Početno vrijeme čekanja između pokušaja
+
+        while attempt < max_attempts:
+            jitter = random.uniform(0, 5)
+            wait_time = initial_wait * (2 ** attempt) + jitter
+            
+            logger.info(f"Waiting {wait_time} seconds before checking report status...")
+            time.sleep(wait_time)
+            
+            report_status = self.get_report_status(report_id)
+            
+            if report_status["status"] == "COMPLETED":
+                logger.info(f"Report completed! URL: {report_status['url']}")
+                # TODO: Ovdje dodati logiku za dohvaćanje i procesiranje podataka iz report_status['url']
+                break
+            elif report_status["status"] == "FAILED":
+                logger.error(f"Report generation failed: {report_status.get('failureReason')}")
+                break
+            
+            attempt += 1
+            
+        if attempt >= max_attempts:
+            logger.warning(f"Reached maximum attempts waiting for report. Last status: {report_status['status']}")
+        
+        return []
+
 class CampaignsStream(AmazonADsStream):
     """Campaigns stream."""
     
@@ -348,7 +390,7 @@ class AdsStream(AmazonADsStream):
         return self.path
 
 
-class SearchTermReportStream(AmazonADsStream):
+class SearchTermReportStream(BaseReportStream):
     """Search term report stream."""
     
     name = "search_term_reports"
@@ -425,7 +467,7 @@ curl --location --request {prepared_request.method} '{prepared_request.url}' \\
         report_info = response.json()
         logger.info(f"Successfully created report request: {report_info}")
         
-        yield from []
+        yield from self.process_report(report_info)
 
     def prepare_request(self, context: dict | None, next_page_token: t.Any | None) -> requests.PreparedRequest:
         """Prepare a request object."""
@@ -517,8 +559,16 @@ curl --location --request {prepared_request.method} '{prepared_request.url}' \\
         
         return headers
 
+    def get_records(self, context: dict | None) -> t.Iterable[dict]:
+        """Get records from the source."""
+        report_request = self.prepare_request(context, None)
+        response = self._request(prepared_request=report_request)
+        report_info = response.json()
+        
+        return self.process_report(report_info)
 
-class AdvertisedProductReportStream(AmazonADsStream):
+
+class AdvertisedProductReportStream(BaseReportStream):
     """Advertised Product report stream."""
     
     name = "advertised_product_reports"
@@ -583,7 +633,7 @@ curl --location --request {prepared_request.method} '{prepared_request.url}' \\
         report_info = response.json()
         logger.info(f"Successfully created report request: {report_info}")
         
-        yield from []
+        yield from self.process_report(report_info)
 
     def prepare_request(self, context: dict | None, next_page_token: t.Any | None) -> requests.PreparedRequest:
         """Prepare a request object."""
@@ -665,8 +715,16 @@ curl --location --request {prepared_request.method} '{prepared_request.url}' \\
         
         return headers
 
+    def get_records(self, context: dict | None) -> t.Iterable[dict]:
+        """Get records from the source."""
+        report_request = self.prepare_request(context, None)
+        response = self._request(prepared_request=report_request)
+        report_info = response.json()
+        
+        return self.process_report(report_info)
 
-class PurchasedProductReportStream(AmazonADsStream):
+
+class PurchasedProductReportStream(BaseReportStream):
     """Purchased Product report stream."""
     
     name = "purchased_product_reports"
@@ -730,7 +788,7 @@ curl --location --request {prepared_request.method} '{prepared_request.url}' \\
         report_info = response.json()
         logger.info(f"Successfully created report request: {report_info}")
         
-        yield from []
+        yield from self.process_report(report_info)
 
     def prepare_request(self, context: dict | None, next_page_token: t.Any | None) -> requests.PreparedRequest:
         """Prepare a request object."""
@@ -812,8 +870,16 @@ curl --location --request {prepared_request.method} '{prepared_request.url}' \\
         
         return headers
 
+    def get_records(self, context: dict | None) -> t.Iterable[dict]:
+        """Get records from the source."""
+        report_request = self.prepare_request(context, None)
+        response = self._request(prepared_request=report_request)
+        report_info = response.json()
+        
+        return self.process_report(report_info)
 
-class GrossAndInvalidTrafficReportStream(AmazonADsStream):
+
+class GrossAndInvalidTrafficReportStream(BaseReportStream):
     """Gross and Invalid Traffic report stream."""
     
     name = "gross_and_invalid_traffic_reports"
@@ -877,7 +943,7 @@ curl --location --request {prepared_request.method} '{prepared_request.url}' \\
         report_info = response.json()
         logger.info(f"Successfully created report request: {report_info}")
         
-        yield from []
+        yield from self.process_report(report_info)
 
     def prepare_request(self, context: dict | None, next_page_token: t.Any | None) -> requests.PreparedRequest:
         """Prepare a request object."""
@@ -958,8 +1024,16 @@ curl --location --request {prepared_request.method} '{prepared_request.url}' \\
         
         return headers
 
+    def get_records(self, context: dict | None) -> t.Iterable[dict]:
+        """Get records from the source."""
+        report_request = self.prepare_request(context, None)
+        response = self._request(prepared_request=report_request)
+        report_info = response.json()
+        
+        return self.process_report(report_info)
 
-class CampaignReportStream(AmazonADsStream):
+
+class CampaignReportStream(BaseReportStream):
     """Campaign report stream."""
     
     name = "campaign_reports"
@@ -1060,7 +1134,7 @@ class CampaignReportStream(AmazonADsStream):
         if attempt >= max_attempts:
             logger.warning(f"Reached maximum attempts waiting for report. Last status: {report_status['status']}")
         
-        return []
+        yield from self.process_report(report_info)
 
     def prepare_request(self, context: dict | None, next_page_token: t.Any | None) -> requests.PreparedRequest:
         """Prepare a request object."""
@@ -1145,62 +1219,10 @@ class CampaignReportStream(AmazonADsStream):
         
         return headers
 
-    def get_report_status(self, report_id: str) -> dict:
-        """Get the status of a report."""
-        # Dodajemo malo duži početni timeout prije prvog poziva
-        time.sleep(2)
-        return self._request(
-            "GET",
-            f"/reporting/reports/{report_id}",
-        ).json()
-
     def get_records(self, context: dict | None) -> t.Iterable[dict]:
         """Get records from the source."""
-        # Dodajemo dugo inicijalno čekanje (2-5 minuta)
-        initial_wait = random.uniform(120, 300)
-        logger.info(f"Waiting {initial_wait:.1f} seconds before sending initial request...")
-        time.sleep(initial_wait)
-        
-        # Dodajemo unique identifier
-        request_id = str(uuid.uuid4())
-        self.request_headers = {}  # Inicijaliziramo headers
-        self.request_headers["X-Request-ID"] = request_id
-        
-        # Create report request
         report_request = self.prepare_request(context, None)
-        response = self._request(
-            prepared_request=report_request
-        )
+        response = self._request(prepared_request=report_request)
         report_info = response.json()
         
-        logger.info("\n=== Initial Report Creation Response ===")
-        logger.info(json.dumps(report_info, indent=2))
-        logger.info("=== End Initial Report Creation Response ===\n")
-        
-        report_id = report_info["reportId"]
-        max_attempts = 10  # Povećavamo broj pokušaja
-        attempt = 0
-        
-        while attempt < max_attempts:
-            # Dodajemo random jitter u vrijeme čekanja
-            jitter = random.uniform(0, 5)
-            wait_time = initial_wait * (2 ** attempt) + jitter
-            
-            logger.info(f"Waiting {wait_time} seconds before checking report status...")
-            time.sleep(wait_time)
-            
-            report_status = self.get_report_status(report_id)
-            
-            if report_status["status"] == "COMPLETED":
-                logger.info(f"Report completed! URL: {report_status['url']}")
-                break
-            elif report_status["status"] == "FAILED":
-                logger.error(f"Report generation failed: {report_status.get('failureReason')}")
-                break
-            
-            attempt += 1
-            
-        if attempt >= max_attempts:
-            logger.warning(f"Reached maximum attempts waiting for report. Last status: {report_status['status']}")
-        
-        return []
+        return self.process_report(report_info)
