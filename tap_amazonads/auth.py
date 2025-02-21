@@ -5,6 +5,8 @@ from __future__ import annotations
 from singer_sdk.authenticators import OAuthAuthenticator, SingletonMeta
 from typing import Any
 import logging
+import requests
+from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -15,10 +17,64 @@ class AmazonADsAuthenticator(OAuthAuthenticator, metaclass=SingletonMeta):
     """Authenticator class for Amazon Ads API."""
 
     def __init__(self, *args, **kwargs):
-        logger.info("Starting AmazonADsAuthenticator initialization")
-        super().__init__(*args, **kwargs)
-        logger.info("AmazonADsAuthenticator initialized")
-        logger.info(f"Config keys available: {list(self.config.keys())}")
+        """Initialize authenticator."""
+        self._config = kwargs
+        self._access_token = None
+        self._token_expiry = None
+        self.logger = logging.getLogger(__name__)
+        
+        self.logger.info("Starting AmazonADsAuthenticator initialization")
+        self.logger.info(f"Config keys available: {list(kwargs.keys())}")
+        
+        # Validate required config
+        required_keys = ['refresh_token', 'client_id', 'client_secret']
+        for key in required_keys:
+            if key not in kwargs:
+                raise Exception(f"Missing required config key: {key}")
+        
+        # Initialize with a fresh token
+        self.refresh_access_token()
+        self.logger.info("AmazonADsAuthenticator initialized")
+
+    def refresh_access_token(self):
+        """Refresh the access token using the refresh token."""
+        token_url = 'https://api.amazon.com/auth/o2/token'
+        data = {
+            'grant_type': 'refresh_token',
+            'refresh_token': self._config['refresh_token'],
+            'client_id': self._config['client_id'],
+            'client_secret': self._config['client_secret']
+        }
+        headers = {
+            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+        }
+        
+        try:
+            response = requests.post(token_url, data=data, headers=headers)
+            response.raise_for_status()
+            token_data = response.json()
+            
+            self._access_token = token_data['access_token']
+            self._token_expiry = datetime.now() + timedelta(seconds=token_data['expires_in'] - 300)  # Buffer of 5 minutes
+            
+            self.logger.info("Successfully refreshed access token")
+        except Exception as e:
+            self.logger.error(f"Failed to refresh access token: {str(e)}")
+            raise
+
+    def get_access_token(self):
+        """Get the current access token, refreshing if necessary."""
+        if not self._access_token or (self._token_expiry and datetime.now() >= self._token_expiry):
+            self.refresh_access_token()
+        return self._access_token
+
+    def get_auth_headers(self):
+        """Get the authentication headers."""
+        return {
+            "Authorization": f"Bearer {self.get_access_token()}",
+            "Amazon-Advertising-API-ClientId": self._config['client_id'],
+            "Content-Type": "application/json"
+        }
 
     @property
     def oauth_request_body(self) -> dict:
@@ -30,9 +86,9 @@ class AmazonADsAuthenticator(OAuthAuthenticator, metaclass=SingletonMeta):
         logger.info("Building OAuth request body")
         body = {
             "grant_type": "refresh_token",
-            "refresh_token": self.config["refresh_token"],
-            "client_id": self.config["client_id"],
-            "client_secret": self.config["client_secret"],
+            "refresh_token": self._config["refresh_token"],
+            "client_id": self._config["client_id"],
+            "client_secret": self._config["client_secret"],
         }
         logger.info("OAuth request body built successfully")
         return body
@@ -84,8 +140,8 @@ class AmazonADsAuthenticator(OAuthAuthenticator, metaclass=SingletonMeta):
             self.update_access_token()
         
         auth_params = {
-            "Amazon-Advertising-API-ClientId": self.config["client_id"],
-            "Amazon-Advertising-API-Scope": self.config["profile_id"],
+            "Amazon-Advertising-API-ClientId": self._config["client_id"],
+            "Amazon-Advertising-API-Scope": self._config["profile_id"],
             "Authorization": f"Bearer {self.access_token}"
         }
         logger.info("Auth params generated successfully")
