@@ -1070,7 +1070,6 @@ curl --location --request {prepared_request.method} '{prepared_request.url}' \\
                     "sales14d",
                     "unitsSoldClicks14d",
                     "topOfSearchImpressionShare",
-                    "date",
                     "startDate",
                     "endDate"
                 ],
