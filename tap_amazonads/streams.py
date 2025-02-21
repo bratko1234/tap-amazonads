@@ -269,6 +269,8 @@ class TargetsStream(AmazonADsStream):
         headers = {
             "Content-Type": "application/vnd.sptargetingClause.v3+json",
             "Accept": "application/vnd.sptargetingClause.v3+json",
+            "Amazon-Advertising-API-ClientId": self.config["client_id"],
+            "Amazon-Advertising-API-Scope": self.config["profile_id"]
         }
         if "user_agent" in self.config:
             headers["User-Agent"] = self.config.get("user_agent")
@@ -978,7 +980,7 @@ curl --location --request {prepared_request.method} '{prepared_request.url}' \\
                     "campaignName",
                     "campaignStatus",
                     "clicks",
-                    "startDate",
+                    "date",
                     "endDate",
                     "grossClickThroughs",
                     "grossImpressions",
@@ -986,7 +988,8 @@ curl --location --request {prepared_request.method} '{prepared_request.url}' \\
                     "invalidClickThroughRate",
                     "invalidClickThroughs",
                     "invalidImpressionRate",
-                    "invalidImpressions"
+                    "invalidImpressions",
+                    "startDate"
                 ],
                 "reportTypeId": "spGrossAndInvalids",
                 "timeUnit": "SUMMARY",
