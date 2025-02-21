@@ -4,12 +4,19 @@ from __future__ import annotations
 
 from singer_sdk.authenticators import OAuthAuthenticator, SingletonMeta
 from typing import Any
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 # The SingletonMeta metaclass makes your streams reuse the same authenticator instance.
 # If this behaviour interferes with your use-case, you can remove the metaclass.
 class AmazonADsAuthenticator(OAuthAuthenticator, metaclass=SingletonMeta):
     """Authenticator class for Amazon Ads API."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        logger.info("Initializing AmazonADsAuthenticator")
 
     @property
     def oauth_request_body(self) -> dict:
@@ -18,6 +25,7 @@ class AmazonADsAuthenticator(OAuthAuthenticator, metaclass=SingletonMeta):
         Returns:
             A dict with the request body
         """
+        logger.info("Getting OAuth request body")
         return {
             "grant_type": "refresh_token",
             "refresh_token": self.config["refresh_token"],
@@ -50,6 +58,10 @@ class AmazonADsAuthenticator(OAuthAuthenticator, metaclass=SingletonMeta):
         Returns:
             Auth headers dict.
         """
+        logger.info("Getting auth params")
+        if not self.access_token:
+            logger.warning("No access token available, attempting to refresh")
+            self.update_access_token()
         return {
             "Amazon-Advertising-API-ClientId": self.config["client_id"],
             "Amazon-Advertising-API-Scope": self.config["profile_id"],

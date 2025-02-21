@@ -10,6 +10,7 @@ import logging
 import json
 
 from tap_amazonads.client import AmazonADsStream
+from tap_amazonads.auth import AmazonADsAuthenticator
 
 SCHEMAS_DIR = Path(__file__).parent / "schemas"
 
@@ -951,12 +952,14 @@ class CampaignReportStream(AmazonADsStream):
     replication_key = "date"
     schema_filepath = SCHEMAS_DIR / "campaign_reports.json"
     method = "POST"
-    records_jsonpath = "$.reports[*]"  # Dodajemo records_jsonpath
+    records_jsonpath = "$.reports[*]"
     
-    def __init__(self, *args, **kwargs):
-        """Initialize the stream."""
-        super().__init__(*args, **kwargs)
-        logger.info(f"Stream initialized with authenticator: {self.authenticator}")
+    @property
+    def authenticator(self) -> AmazonADsAuthenticator:
+        """Return a new authenticator object."""
+        if not self._authenticator:
+            self._authenticator = AmazonADsAuthenticator.create_for_stream(self)
+        return self._authenticator
 
     def request_records(self, context: dict | None) -> t.Iterable[dict]:
         """Request records from REST endpoint(s)."""
