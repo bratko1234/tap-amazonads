@@ -24,11 +24,23 @@ class BaseReportStream(AmazonADsStream):
 
     def get_report_status(self, report_id: str) -> dict:
         """Get the status of a report."""
-        time.sleep(2)  # Kratka pauza prije poziva
-        return self._request(
-            "GET",
-            f"/reporting/reports/{report_id}",
-        ).json()
+        url = f"{self.url}/{report_id}"
+        
+        headers = {
+            "Content-Type": "application/json",
+            "Amazon-Advertising-API-ClientId": self.config["client_id"],
+            "Amazon-Advertising-API-Scope": self.config["scope"],
+            "Authorization": f"Bearer {self.authenticator.access_token}"
+        }
+        
+        request = requests.Request(
+            method="GET",
+            url=url,
+            headers=headers
+        )
+        prepared_request = request.prepare()
+        
+        return self._request(prepared_request)
 
     def process_report(self, report_info: dict) -> t.Iterable[dict]:
         """Process report after initial creation."""
