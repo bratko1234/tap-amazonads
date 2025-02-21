@@ -972,7 +972,8 @@ class CampaignReportStream(AmazonADsStream):
     
     def __init__(self, *args, **kwargs):
         """Initialize the stream."""
-        self._authenticator = None  # Dodajemo inicijalizaciju
+        self._authenticator = None
+        self.request_headers = {}  # Inicijaliziramo request_headers
         super().__init__(*args, **kwargs)
         logger.info(f"Stream initialized with authenticator: {self.authenticator}")
 
