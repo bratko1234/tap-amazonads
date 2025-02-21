@@ -152,13 +152,32 @@ class CampaignsStream(AmazonADsStream):
         request_data = self.get_request_body(context, next_page_token)
         headers = self.http_headers
 
-        return self.build_prepared_request(
+        # Dodajemo logging
+        logger.info("\n=== Campaigns Stream Request Details ===")
+        logger.info(f"URL: {url}")
+        logger.info(f"Method: {http_method}")
+        logger.info(f"Params: {params}")
+        logger.info(f"Headers: {headers}")
+        logger.info(f"Request Body: {request_data}")
+        logger.info("=== End Campaigns Stream Request Details ===\n")
+
+        prepared_request = self.build_prepared_request(
             method=http_method,
             url=url,
             params=params,
             headers=headers,
             json=request_data,
         )
+
+        # Logujemo i prepared request
+        logger.info("\n=== Prepared Request Details ===")
+        logger.info(f"Final URL: {prepared_request.url}")
+        logger.info(f"Final Method: {prepared_request.method}")
+        logger.info(f"Final Headers: {prepared_request.headers}")
+        logger.info(f"Final Body: {prepared_request.body}")
+        logger.info("=== End Prepared Request Details ===\n")
+
+        return prepared_request
 
     def get_path(self, context: dict | None) -> str:
         """Return the API endpoint path."""
@@ -227,13 +246,32 @@ class AdGroupsStream(AmazonADsStream):
         request_data = self.get_request_body(context, next_page_token)
         headers = self.http_headers
 
-        return self.build_prepared_request(
+        # Dodajemo logging
+        logger.info("\n=== Ad Groups Stream Request Details ===")
+        logger.info(f"URL: {url}")
+        logger.info(f"Method: {http_method}")
+        logger.info(f"Params: {params}")
+        logger.info(f"Headers: {headers}")
+        logger.info(f"Request Body: {request_data}")
+        logger.info("=== End Ad Groups Stream Request Details ===\n")
+
+        prepared_request = self.build_prepared_request(
             method=http_method,
             url=url,
             params=params,
             headers=headers,
             json=request_data,
         )
+
+        # Logujemo i prepared request
+        logger.info("\n=== Prepared Request Details ===")
+        logger.info(f"Final URL: {prepared_request.url}")
+        logger.info(f"Final Method: {prepared_request.method}")
+        logger.info(f"Final Headers: {prepared_request.headers}")
+        logger.info(f"Final Body: {prepared_request.body}")
+        logger.info("=== End Prepared Request Details ===\n")
+
+        return prepared_request
 
     def get_path(self, context: dict | None) -> str:
         """Return the API endpoint path."""
@@ -303,13 +341,32 @@ class TargetsStream(AmazonADsStream):
         request_data = self.get_request_body(context, next_page_token)
         headers = self.http_headers
 
-        return self.build_prepared_request(
+        # Dodajemo logging
+        logger.info("\n=== Targets Stream Request Details ===")
+        logger.info(f"URL: {url}")
+        logger.info(f"Method: {http_method}")
+        logger.info(f"Params: {params}")
+        logger.info(f"Headers: {headers}")
+        logger.info(f"Request Body: {request_data}")
+        logger.info("=== End Targets Stream Request Details ===\n")
+
+        prepared_request = self.build_prepared_request(
             method=http_method,
             url=url,
             params=params,
             headers=headers,
             json=request_data,
         )
+
+        # Logujemo i prepared request
+        logger.info("\n=== Prepared Request Details ===")
+        logger.info(f"Final URL: {prepared_request.url}")
+        logger.info(f"Final Method: {prepared_request.method}")
+        logger.info(f"Final Headers: {prepared_request.headers}")
+        logger.info(f"Final Body: {prepared_request.body}")
+        logger.info("=== End Prepared Request Details ===\n")
+
+        return prepared_request
 
     def get_path(self, context: dict | None) -> str:
         """Return the API endpoint path."""
@@ -382,13 +439,32 @@ class AdsStream(AmazonADsStream):
         request_data = self.get_request_body(context, next_page_token)
         headers = self.http_headers
 
-        return self.build_prepared_request(
+        # Dodajemo logging
+        logger.info("\n=== Ads Stream Request Details ===")
+        logger.info(f"URL: {url}")
+        logger.info(f"Method: {http_method}")
+        logger.info(f"Params: {params}")
+        logger.info(f"Headers: {headers}")
+        logger.info(f"Request Body: {request_data}")
+        logger.info("=== End Ads Stream Request Details ===\n")
+
+        prepared_request = self.build_prepared_request(
             method=http_method,
             url=url,
             params=params,
             headers=headers,
             json=request_data,
         )
+
+        # Logujemo i prepared request
+        logger.info("\n=== Prepared Request Details ===")
+        logger.info(f"Final URL: {prepared_request.url}")
+        logger.info(f"Final Method: {prepared_request.method}")
+        logger.info(f"Final Headers: {prepared_request.headers}")
+        logger.info(f"Final Body: {prepared_request.body}")
+        logger.info("=== End Prepared Request Details ===\n")
+
+        return prepared_request
 
     def get_path(self, context: dict | None) -> str:
         """Return the API endpoint path."""
