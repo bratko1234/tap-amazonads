@@ -978,7 +978,7 @@ curl --location --request {prepared_request.method} '{prepared_request.url}' \\
                     "campaignName",
                     "campaignStatus",
                     "clicks",
-                    "date",
+                    "startDate",
                     "endDate",
                     "grossClickThroughs",
                     "grossImpressions",
@@ -986,8 +986,7 @@ curl --location --request {prepared_request.method} '{prepared_request.url}' \\
                     "invalidClickThroughRate",
                     "invalidClickThroughs",
                     "invalidImpressionRate",
-                    "invalidImpressions",
-                    "startDate"
+                    "invalidImpressions"
                 ],
                 "reportTypeId": "spGrossAndInvalids",
                 "timeUnit": "SUMMARY",
