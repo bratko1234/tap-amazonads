@@ -8,6 +8,7 @@ from singer_sdk import typing as th
 import requests
 import logging
 import json
+import time
 
 from tap_amazonads.client import AmazonADsStream
 from tap_amazonads.auth import AmazonADsAuthenticator
@@ -1121,3 +1122,81 @@ curl --location --request {prepared_request.method} '{prepared_request.url}' \\
         logger.info("=== End Headers Details ===\n")
         
         return headers
+
+    def get_report_status(self, report_id: str) -> dict:
+        """Get the status of a report."""
+        url = f"{self.url_base}/reporting/reports/{report_id}"
+        
+        logger.info("\n=== Checking Report Status ===")
+        logger.info(f"Report ID: {report_id}")
+        logger.info(f"URL: {url}")
+        
+        headers = {
+            "Content-Type": "application/json",
+            "Amazon-Advertising-API-ClientId": self.config["client_id"],
+            "Amazon-Advertising-API-Scope": self.config["profile_id"],
+        }
+        
+        logger.info("Request headers:")
+        safe_headers = headers.copy()
+        if 'Authorization' in safe_headers:
+            safe_headers['Authorization'] = safe_headers['Authorization'][:20] + '...'
+        logger.info(json.dumps(safe_headers, indent=2))
+        
+        response = self._request(
+            url=url,
+            headers=headers,
+            method="GET"
+        )
+        
+        logger.info("\n=== Report Status Response ===")
+        logger.info(f"Status Code: {response.status_code}")
+        logger.info("Response Headers:")
+        logger.info(json.dumps(dict(response.headers), indent=2))
+        logger.info("Response Body:")
+        logger.info(json.dumps(response.json(), indent=2))
+        logger.info("=== End Report Status Response ===\n")
+        
+        return response.json()
+
+    def get_records(self, context: dict | None) -> t.Iterable[dict]:
+        """Get records from the source."""
+        # Create report request
+        report_request = self.prepare_request(context, None)
+        response = self._request(
+            prepared_request=report_request
+        )
+        report_info = response.json()
+        
+        logger.info("\n=== Initial Report Creation Response ===")
+        logger.info(json.dumps(report_info, indent=2))
+        logger.info("=== End Initial Report Creation Response ===\n")
+        
+        report_id = report_info["reportId"]
+        
+        # Wait for report to be generated (max 60 seconds)
+        max_attempts = 12
+        attempt = 0
+        while attempt < max_attempts:
+            report_status = self.get_report_status(report_id)
+            
+            if report_status["status"] == "COMPLETED":
+                logger.info(f"Report completed! URL: {report_status['url']}")
+                # Here you would download and process the report
+                break
+            elif report_status["status"] == "FAILED":
+                logger.error(f"Report generation failed: {report_status.get('failureReason')}")
+                break
+            
+            attempt += 1
+            if attempt < max_attempts:
+                wait_time = 5  # seconds
+                logger.info(f"Report still processing. Waiting {wait_time} seconds before checking again...")
+                time.sleep(wait_time)
+        
+        if attempt >= max_attempts:
+            logger.warning("Reached maximum attempts waiting for report. Last status: " + 
+                         report_status["status"])
+        
+        # For now, return empty list - we'll implement report downloading next
+        return []
