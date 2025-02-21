@@ -24,7 +24,7 @@ class BaseReportStream(AmazonADsStream):
 
     def get_report_status(self, report_id: str) -> dict:
         """Get the status of a report."""
-        url = f"{self.url}/{report_id}"
+        url = f"https://advertising-api.amazon.com/reporting/reports/{report_id}"
         
         headers = {
             "Content-Type": "application/json",
