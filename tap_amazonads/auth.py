@@ -17,17 +17,13 @@ class AmazonADsAuthenticator:
     """Authenticator for Amazon Ads."""
 
     def __init__(self, config):
-        """Initialize authenticator.
-        
-        Args:
-            config: The tap config object
-        """
-        self.logger.info("=== Starting AmazonADsAuthenticator initialization ===")
+        """Initialize authenticator."""
         self._config = config
         self._access_token = None
         self._token_expiry = None
-        self.logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger(__name__)  # Prvo inicijaliziramo logger
         
+        self.logger.info("=== Starting AmazonADsAuthenticator initialization ===")
         self.logger.info(f"Config keys available: {list(config.keys())}")
         
         # Required config keys
@@ -41,6 +37,7 @@ class AmazonADsAuthenticator:
         # Validate required config
         for key in required_keys:
             if key not in config:
+                self.logger.error(f"Missing required config key: {key}")
                 raise Exception(f"Missing required config key: {key}")
         
         self.refresh_access_token()
