@@ -67,12 +67,16 @@ class AmazonADsAuthenticator:
     def create_for_stream(cls, stream) -> "AmazonADsAuthenticator":
         """Create a new authenticator for the given stream."""
         logger.info(f"Creating authenticator for stream: {stream.name}")
+        
+        if not hasattr(stream, 'tap') or not stream.tap:
+            raise Exception("Stream must have a tap instance")
+        
         logger.info(f"Stream config: {stream.config}")
         logger.info(f"Stream tap config: {stream.tap.config}")
         
         auth = cls(
-            stream.config.get("auth_endpoint"),
-            stream.config
+            stream.tap.config.get("auth_endpoint"),
+            stream.tap.config  # Pass the tap's config instead of stream config
         )
         return auth
 

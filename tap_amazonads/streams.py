@@ -355,9 +355,13 @@ class SearchTermReportStream(AmazonADsStream):
     schema_filepath = SCHEMAS_DIR / "search_term_reports.json"
     method = "POST"
     
-    def __init__(self, *args, **kwargs):
-        """Initialize the stream."""
-        super().__init__(*args, **kwargs)
+    def __init__(self, tap=None):
+        """Initialize the stream.
+        
+        Args:
+            tap: The parent tap instance
+        """
+        super().__init__(tap=tap)
         logger.info(f"Stream initialized with authenticator: {self.authenticator}")
 
     def request_records(self, context: dict | None) -> t.Iterable[dict]:
