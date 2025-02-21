@@ -15,6 +15,7 @@ from singer_sdk.streams import RESTStream
 from singer_sdk.exceptions import FatalAPIError, RetriableAPIError
 import gzip
 import json
+import logging
 
 from tap_amazonads.auth import AmazonADsAuthenticator
 
@@ -22,6 +23,8 @@ if t.TYPE_CHECKING:
     from singer_sdk.helpers.types import Auth, Context
 
 SCHEMAS_DIR = Path(__file__).parent / "schemas"
+
+logger = logging.getLogger(__name__)
 
 # Define custom error classes for Amazon Ads API
 class AmazonAdsError(Exception):
