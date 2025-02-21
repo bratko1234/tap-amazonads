@@ -1125,42 +1125,20 @@ curl --location --request {prepared_request.method} '{prepared_request.url}' \\
 
     def get_report_status(self, report_id: str) -> dict:
         """Get the status of a report."""
-        url = f"{self.url_base}/reporting/reports/{report_id}"
-        
-        logger.info("\n=== Checking Report Status ===")
-        logger.info(f"Report ID: {report_id}")
-        logger.info(f"URL: {url}")
-        
-        headers = {
-            "Content-Type": "application/json",
-            "Amazon-Advertising-API-ClientId": self.config["client_id"],
-            "Amazon-Advertising-API-Scope": self.config["profile_id"],
-        }
-        
-        logger.info("Request headers:")
-        safe_headers = headers.copy()
-        if 'Authorization' in safe_headers:
-            safe_headers['Authorization'] = safe_headers['Authorization'][:20] + '...'
-        logger.info(json.dumps(safe_headers, indent=2))
-        
-        response = self._request(
-            url=url,
-            headers=headers,
-            method="GET"
-        )
-        
-        logger.info("\n=== Report Status Response ===")
-        logger.info(f"Status Code: {response.status_code}")
-        logger.info("Response Headers:")
-        logger.info(json.dumps(dict(response.headers), indent=2))
-        logger.info("Response Body:")
-        logger.info(json.dumps(response.json(), indent=2))
-        logger.info("=== End Report Status Response ===\n")
-        
-        return response.json()
+        # Dodajemo malo duži početni timeout prije prvog poziva
+        time.sleep(2)
+        return self._request(
+            "GET",
+            f"/reporting/reports/{report_id}",
+        ).json()
 
     def get_records(self, context: dict | None) -> t.Iterable[dict]:
         """Get records from the source."""
+        # Konfiguracija za čekanje
+        max_attempts = 5  # Smanjujemo broj pokušaja
+        initial_wait = 10  # Povećavamo početno vrijeme čekanja
+        attempt = 0
+        
         # Create report request
         report_request = self.prepare_request(context, None)
         response = self._request(
@@ -1174,9 +1152,6 @@ curl --location --request {prepared_request.method} '{prepared_request.url}' \\
         
         report_id = report_info["reportId"]
         
-        # Wait for report to be generated (max 60 seconds)
-        max_attempts = 12
-        attempt = 0
         while attempt < max_attempts:
             report_status = self.get_report_status(report_id)
             
@@ -1190,7 +1165,8 @@ curl --location --request {prepared_request.method} '{prepared_request.url}' \\
             
             attempt += 1
             if attempt < max_attempts:
-                wait_time = 5  # seconds
+                # Eksponencijalno povećavamo vrijeme čekanja između pokušaja
+                wait_time = initial_wait * (2 ** attempt)  # 10s, 20s, 40s, 80s...
                 logger.info(f"Report still processing. Waiting {wait_time} seconds before checking again...")
                 time.sleep(wait_time)
         
