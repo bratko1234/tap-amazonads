@@ -346,12 +346,12 @@ class AdsStream(AmazonADsStream):
 
 
 class SearchTermReportStream(AmazonADsStream):
-    """Search Term report stream."""
+    """Search term report stream."""
     
     name = "search_term_reports"
     path = "/reporting/reports"
-    primary_keys = ["campaignId", "date", "searchTerm"]
-    replication_key = "date"
+    primary_keys: t.ClassVar[list[str]] = ["reportId"]
+    replication_key = None
     schema_filepath = SCHEMAS_DIR / "search_term_reports.json"
     method = "POST"
     
@@ -362,7 +362,16 @@ class SearchTermReportStream(AmazonADsStream):
             tap: The parent tap instance
         """
         super().__init__(tap=tap)
-        logger.info(f"Stream initialized with authenticator: {self.authenticator}")
+        self.tap = tap  # Explicitly store tap reference
+        if tap:
+            logger.info(f"Stream {self.name} initialized with tap config: {tap.config}")
+
+    @property
+    def authenticator(self):
+        """Return a new authenticator object."""
+        if not self.tap:
+            raise Exception(f"Stream {self.name} has no tap instance")
+        return AmazonADsAuthenticator.create_for_stream(self)
 
     def request_records(self, context: dict | None) -> t.Iterable[dict]:
         """Request records from REST endpoint(s)."""

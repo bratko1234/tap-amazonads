@@ -80,6 +80,17 @@ class AmazonAdsPaginator(BaseAPIPaginator):
 class AmazonADsStream(RESTStream):
     """AmazonADs stream class."""
 
+    def __init__(self, tap=None):
+        """Initialize the stream.
+        
+        Args:
+            tap: The parent tap instance
+        """
+        super().__init__(tap=tap)
+        self.tap = tap  # Explicitly store tap reference
+        if tap:
+            logger.info(f"Base stream {self.name} initialized with tap config: {tap.config}")
+
     # Common settings for all streams
     records_jsonpath = "$.data[*]"  # Amazon Ads API typically returns data in a 'data' field
     next_page_token_jsonpath = None  # We'll use our custom paginator
@@ -107,12 +118,10 @@ class AmazonADsStream(RESTStream):
         return "https://advertising-api.amazon.com"  # NA region
 
     @cached_property
-    def authenticator(self) -> Auth:
-        """Return a new authenticator object.
-
-        Returns:
-            An authenticator instance.
-        """
+    def authenticator(self):
+        """Return a new authenticator object."""
+        if not self.tap:
+            raise Exception(f"Stream {self.name} has no tap instance")
         return AmazonADsAuthenticator.create_for_stream(self)
 
     def get_new_paginator(self) -> AmazonAdsPaginator:
