@@ -951,6 +951,7 @@ class CampaignReportStream(AmazonADsStream):
     replication_key = "date"
     schema_filepath = SCHEMAS_DIR / "campaign_reports.json"
     method = "POST"
+    records_jsonpath = "$.reports[*]"  # Dodajemo records_jsonpath
     
     def __init__(self, *args, **kwargs):
         """Initialize the stream."""
