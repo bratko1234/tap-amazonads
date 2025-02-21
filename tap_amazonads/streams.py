@@ -1013,11 +1013,14 @@ class CampaignReportStream(AmazonADsStream):
         logger.info("Authentication check passed")
         logger.info(f"Access token (first 20 chars): {access_token[:20]}...")
         
-        # Dodajemo random delay i unique identifier za izbjegavanje duplikata
-        time.sleep(random.uniform(1, 3))
+        # Dodajemo dugo inicijalno čekanje (2-5 minuta)
+        initial_wait = random.uniform(120, 300)
+        logger.info(f"Waiting {initial_wait:.1f} seconds before sending initial request...")
+        time.sleep(initial_wait)
         
-        # Dodajemo unique identifier u request
+        # Dodajemo unique identifier
         request_id = str(uuid.uuid4())
+        self.request_headers = {}  # Inicijaliziramo headers
         self.request_headers["X-Request-ID"] = request_id
         
         # Create report request
@@ -1034,7 +1037,6 @@ class CampaignReportStream(AmazonADsStream):
         report_id = report_info["reportId"]
         max_attempts = 10  # Povećavamo broj pokušaja
         attempt = 0
-        initial_wait = 30  # Povećavamo početno vrijeme čekanja na 30 sekundi
         
         while attempt < max_attempts:
             # Dodajemo random jitter u vrijeme čekanja
@@ -1154,11 +1156,14 @@ class CampaignReportStream(AmazonADsStream):
 
     def get_records(self, context: dict | None) -> t.Iterable[dict]:
         """Get records from the source."""
-        # Dodajemo random delay i unique identifier za izbjegavanje duplikata
-        time.sleep(random.uniform(1, 3))
+        # Dodajemo dugo inicijalno čekanje (2-5 minuta)
+        initial_wait = random.uniform(120, 300)
+        logger.info(f"Waiting {initial_wait:.1f} seconds before sending initial request...")
+        time.sleep(initial_wait)
         
-        # Dodajemo unique identifier u request
+        # Dodajemo unique identifier
         request_id = str(uuid.uuid4())
+        self.request_headers = {}  # Inicijaliziramo headers
         self.request_headers["X-Request-ID"] = request_id
         
         # Create report request
@@ -1175,7 +1180,6 @@ class CampaignReportStream(AmazonADsStream):
         report_id = report_info["reportId"]
         max_attempts = 10  # Povećavamo broj pokušaja
         attempt = 0
-        initial_wait = 30  # Povećavamo početno vrijeme čekanja na 30 sekundi
         
         while attempt < max_attempts:
             # Dodajemo random jitter u vrijeme čekanja
