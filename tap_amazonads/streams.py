@@ -9,6 +9,8 @@ import requests
 import logging
 import json
 import time
+import random
+import uuid
 
 from tap_amazonads.client import AmazonADsStream
 from tap_amazonads.auth import AmazonADsAuthenticator
@@ -1010,35 +1012,52 @@ class CampaignReportStream(AmazonADsStream):
         logger.info("Authentication check passed")
         logger.info(f"Access token (first 20 chars): {access_token[:20]}...")
         
-        prepared_request = self.prepare_request(context, None)
+        # Dodajemo random delay i unique identifier za izbjegavanje duplikata
+        time.sleep(random.uniform(1, 3))
         
-        # Log complete request as CURL command
-        curl_command = f"""
-curl --location --request {prepared_request.method} '{prepared_request.url}' \\
---header 'Content-Type: {prepared_request.headers.get("Content-Type", "")}' \\
---header 'Accept: {prepared_request.headers.get("Accept", "")}' \\
---header 'Amazon-Advertising-API-ClientId: {prepared_request.headers.get("Amazon-Advertising-API-ClientId", "")}' \\
---header 'Amazon-Advertising-API-Scope: {prepared_request.headers.get("Amazon-Advertising-API-Scope", "")}' \\
---header 'Authorization: Bearer {access_token}' \\
---data-raw '{prepared_request.body.decode() if prepared_request.body else ""}'
-"""
-        logger.info(f"Equivalent CURL command:\n{curl_command}")
+        # Dodajemo unique identifier u request
+        request_id = str(uuid.uuid4())
+        self.request_headers["X-Request-ID"] = request_id
         
-        response = self._request(prepared_request, context)
-        
-        logger.info("\n=== Response Details ===")
-        logger.info(f"Response status code: {response.status_code}")
-        logger.info(f"Response headers: {dict(response.headers)}")
-        logger.info(f"Response body: {response.text}")
-        logger.info("=== End Response Details ===\n")
-        
-        if response.status_code != 200:
-            raise Exception(f"Report request failed: {response.text}")
-            
+        # Create report request
+        report_request = self.prepare_request(context, None)
+        response = self._request(
+            prepared_request=report_request
+        )
         report_info = response.json()
-        logger.info(f"Successfully created report request: {report_info}")
         
-        yield from []
+        logger.info("\n=== Initial Report Creation Response ===")
+        logger.info(json.dumps(report_info, indent=2))
+        logger.info("=== End Initial Report Creation Response ===\n")
+        
+        report_id = report_info["reportId"]
+        max_attempts = 10  # Povećavamo broj pokušaja
+        attempt = 0
+        initial_wait = 30  # Povećavamo početno vrijeme čekanja na 30 sekundi
+        
+        while attempt < max_attempts:
+            # Dodajemo random jitter u vrijeme čekanja
+            jitter = random.uniform(0, 5)
+            wait_time = initial_wait * (2 ** attempt) + jitter
+            
+            logger.info(f"Waiting {wait_time} seconds before checking report status...")
+            time.sleep(wait_time)
+            
+            report_status = self.get_report_status(report_id)
+            
+            if report_status["status"] == "COMPLETED":
+                logger.info(f"Report completed! URL: {report_status['url']}")
+                break
+            elif report_status["status"] == "FAILED":
+                logger.error(f"Report generation failed: {report_status.get('failureReason')}")
+                break
+            
+            attempt += 1
+            
+        if attempt >= max_attempts:
+            logger.warning(f"Reached maximum attempts waiting for report. Last status: {report_status['status']}")
+        
+        return []
 
     def prepare_request(self, context: dict | None, next_page_token: t.Any | None) -> requests.PreparedRequest:
         """Prepare a request object."""
@@ -1134,10 +1153,12 @@ curl --location --request {prepared_request.method} '{prepared_request.url}' \\
 
     def get_records(self, context: dict | None) -> t.Iterable[dict]:
         """Get records from the source."""
-        # Konfiguracija za čekanje
-        max_attempts = 5  # Smanjujemo broj pokušaja
-        initial_wait = 10  # Povećavamo početno vrijeme čekanja
-        attempt = 0
+        # Dodajemo random delay i unique identifier za izbjegavanje duplikata
+        time.sleep(random.uniform(1, 3))
+        
+        # Dodajemo unique identifier u request
+        request_id = str(uuid.uuid4())
+        self.request_headers["X-Request-ID"] = request_id
         
         # Create report request
         report_request = self.prepare_request(context, None)
@@ -1151,28 +1172,30 @@ curl --location --request {prepared_request.method} '{prepared_request.url}' \\
         logger.info("=== End Initial Report Creation Response ===\n")
         
         report_id = report_info["reportId"]
+        max_attempts = 10  # Povećavamo broj pokušaja
+        attempt = 0
+        initial_wait = 30  # Povećavamo početno vrijeme čekanja na 30 sekundi
         
         while attempt < max_attempts:
+            # Dodajemo random jitter u vrijeme čekanja
+            jitter = random.uniform(0, 5)
+            wait_time = initial_wait * (2 ** attempt) + jitter
+            
+            logger.info(f"Waiting {wait_time} seconds before checking report status...")
+            time.sleep(wait_time)
+            
             report_status = self.get_report_status(report_id)
             
             if report_status["status"] == "COMPLETED":
                 logger.info(f"Report completed! URL: {report_status['url']}")
-                # Here you would download and process the report
                 break
             elif report_status["status"] == "FAILED":
                 logger.error(f"Report generation failed: {report_status.get('failureReason')}")
                 break
             
             attempt += 1
-            if attempt < max_attempts:
-                # Eksponencijalno povećavamo vrijeme čekanja između pokušaja
-                wait_time = initial_wait * (2 ** attempt)  # 10s, 20s, 40s, 80s...
-                logger.info(f"Report still processing. Waiting {wait_time} seconds before checking again...")
-                time.sleep(wait_time)
-        
+            
         if attempt >= max_attempts:
-            logger.warning("Reached maximum attempts waiting for report. Last status: " + 
-                         report_status["status"])
+            logger.warning(f"Reached maximum attempts waiting for report. Last status: {report_status['status']}")
         
-        # For now, return empty list - we'll implement report downloading next
         return []
