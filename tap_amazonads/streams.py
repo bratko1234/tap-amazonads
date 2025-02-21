@@ -40,7 +40,8 @@ class BaseReportStream(AmazonADsStream):
         )
         prepared_request = request.prepare()
         
-        return self._request(prepared_request)
+        response = self._request(prepared_request)
+        return response.json()
 
     def process_report(self, report_info: dict) -> t.Iterable[dict]:
         """Process report after initial creation."""
