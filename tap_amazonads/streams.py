@@ -11,6 +11,8 @@ import json
 import time
 import random
 import uuid
+import gzip
+import io
 
 from tap_amazonads.client import AmazonADsStream
 from tap_amazonads.auth import AmazonADsAuthenticator, AmazonADsNonReportAuthenticator
@@ -43,12 +45,40 @@ class BaseReportStream(AmazonADsStream):
         response = self._request(prepared_request)
         return response.json()
 
+    def download_and_process_report(self, report_url: str) -> list[dict]:
+        """Download, unzip and process report from S3."""
+        logger.info(f"Downloading report from URL: {report_url}")
+        
+        try:
+            # Download the gzipped file
+            response = requests.get(report_url)
+            response.raise_for_status()
+            
+            # Decompress the gzipped content
+            with gzip.GzipFile(fileobj=io.BytesIO(response.content)) as gz:
+                json_content = gz.read().decode('utf-8')
+            
+            # Parse JSON content
+            records = json.loads(json_content)
+            
+            logger.info("Successfully processed report content:")
+            logger.info(f"Number of records: {len(records)}")
+            logger.info("First record sample:")
+            if records:
+                logger.info(json.dumps(records[0], indent=2))
+            
+            return records
+            
+        except Exception as e:
+            logger.error(f"Error processing report: {str(e)}")
+            raise
+
     def process_report(self, report_info: dict) -> t.Iterable[dict]:
         """Process report after initial creation."""
         report_id = report_info["reportId"]
         max_attempts = 10
         attempt = 0
-        initial_wait = 120  # Početno vrijeme čekanja između pokušaja
+        initial_wait = 600  # Povećano na 10 minuta
 
         while attempt < max_attempts:
             jitter = random.uniform(0, 5)
@@ -58,21 +88,22 @@ class BaseReportStream(AmazonADsStream):
             time.sleep(wait_time)
             
             report_status = self.get_report_status(report_id)
+            logger.info(f"Report status: {report_status['status']}")
             
             if report_status["status"] == "COMPLETED":
                 logger.info(f"Report completed! URL: {report_status['url']}")
-                # TODO: Ovdje dodati logiku za dohvaćanje i procesiranje podataka iz report_status['url']
-                break
+                return self.download_and_process_report(report_status['url'])
+                
             elif report_status["status"] == "FAILED":
-                logger.error(f"Report generation failed: {report_status.get('failureReason')}")
-                break
+                error_msg = f"Report generation failed: {report_status.get('failureReason')}"
+                logger.error(error_msg)
+                raise Exception(error_msg)
             
             attempt += 1
             
-        if attempt >= max_attempts:
-            logger.warning(f"Reached maximum attempts waiting for report. Last status: {report_status['status']}")
-        
-        return []
+        error_msg = f"Reached maximum attempts waiting for report. Last status: {report_status['status']}"
+        logger.warning(error_msg)
+        raise Exception(error_msg)
 
 class CampaignsStream(AmazonADsStream):
     """Campaigns stream."""
