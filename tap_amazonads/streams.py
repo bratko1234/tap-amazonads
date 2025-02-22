@@ -304,6 +304,14 @@ class TargetsStream(AmazonADsStream):
         """Return a new authenticator object."""
         return AmazonADsNonReportAuthenticator(self.config)
 
+    def prepare_request_payload(
+        self,
+        context: dict | None,
+        next_page_token: t.Any | None,
+    ) -> dict | None:
+        """Prepare request payload."""
+        return {}  # Vraćamo prazan objekat umesto parametara
+
     @property
     def http_headers(self) -> dict:
         """Return the http headers needed."""
