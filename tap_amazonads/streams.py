@@ -13,7 +13,7 @@ import random
 import uuid
 
 from tap_amazonads.client import AmazonADsStream
-from tap_amazonads.auth import AmazonADsAuthenticator
+from tap_amazonads.auth import AmazonADsAuthenticator, AmazonADsNonReportAuthenticator
 
 SCHEMAS_DIR = Path(__file__).parent / "schemas"
 
@@ -292,61 +292,61 @@ class TargetsStream(AmazonADsStream):
     """Targets stream."""
     
     name = "targets"
-    path = "/sp/targets/list"  # Default to Sponsored Products
+    path = "/sp/targets/list"
     primary_keys: t.ClassVar[list[str]] = ["targetId"]
     replication_key = "lastUpdatedDateTime"
     schema_filepath = SCHEMAS_DIR / "targets.json"
-    method = "POST"  # Default to POST for SP and SB
+    method = "POST"
     records_jsonpath = "$.targetingClauses[*]"
-    ignore_parent_replication_keys = True
     
+    @property
+    def authenticator(self) -> AmazonADsNonReportAuthenticator:
+        """Return a new authenticator object."""
+        return AmazonADsNonReportAuthenticator(self.config)
+
     @property
     def http_headers(self) -> dict:
         """Return the http headers needed."""
-        headers = super().http_headers  # Koristimo parent headers kao base
-        headers.update({
+        headers = {
             "Content-Type": "application/vnd.sptargetingClause.v3+json",
             "Accept": "application/vnd.sptargetingClause.v3+json",
             "Amazon-Advertising-API-ClientId": self.config["client_id"],
-            "Amazon-Advertising-API-Scope": self.config["profile_id"]
-        })
+            "Amazon-Advertising-API-Scope": self.config["profile_id"],
+        }
+        # Add Authorization header from authenticator
+        if self.authenticator:
+            headers["Authorization"] = f"Bearer {self.authenticator.access_token}"
+        
+        logger.info("Request headers prepared: %s", headers)
         return headers
-
-    def get_url_params(self, context: dict | None, next_page_token: t.Any | None) -> dict[str, t.Any]:
-        """Return a dictionary of values to be used in URL parameterization."""
-        params: dict = {}
-        if context and "adProduct" in context:
-            params["adProduct"] = context["adProduct"]
-        return params
 
     def get_request_body(self, context: dict | None, next_page_token: t.Any | None) -> dict | None:
         """Return a dictionary to be sent in the request body."""
         request_data = {
             "startIndex": int(next_page_token) if next_page_token else 0,
             "count": self.page_size,
-            "adProduct": "SPONSORED_PRODUCTS",  # Required field
-            "state": "enabled,paused,archived"  # Changed from stateFilter to state
+            "stateFilter": "enabled,paused,archived"
         }
-        if context:
-            request_data["adGroupId"] = context["adGroupId"]
+        logger.info("Request body prepared: %s", request_data)
         return request_data
 
-    def prepare_request(self, context: dict | None, next_page_token: t.Any | None) -> requests.PreparedRequest:
+    def prepare_request(
+        self, 
+        context: dict | None, 
+        next_page_token: t.Any | None
+    ) -> requests.PreparedRequest:
         """Prepare a request object for the REST API."""
         http_method = self.method
         url: str = self.get_url(context)
-        params: dict = self.get_url_params(context, next_page_token)
+        params: dict = {}
         request_data = self.get_request_body(context, next_page_token)
         headers = self.http_headers
 
-        # Dodajemo logging
-        logger.info("\n=== Targets Stream Request Details ===")
+        logger.info("Preparing request with:")
         logger.info(f"URL: {url}")
         logger.info(f"Method: {http_method}")
-        logger.info(f"Params: {params}")
         logger.info(f"Headers: {headers}")
-        logger.info(f"Request Body: {request_data}")
-        logger.info("=== End Targets Stream Request Details ===\n")
+        logger.info(f"Body: {request_data}")
 
         prepared_request = self.build_prepared_request(
             method=http_method,
@@ -356,29 +356,29 @@ class TargetsStream(AmazonADsStream):
             json=request_data,
         )
 
-        # Logujemo i prepared request
-        logger.info("\n=== Prepared Request Details ===")
+        logger.info("Prepared request details:")
         logger.info(f"Final URL: {prepared_request.url}")
         logger.info(f"Final Method: {prepared_request.method}")
         logger.info(f"Final Headers: {prepared_request.headers}")
         logger.info(f"Final Body: {prepared_request.body}")
-        logger.info("=== End Prepared Request Details ===\n")
 
         return prepared_request
 
     def get_path(self, context: dict | None) -> str:
         """Return the API endpoint path."""
         ad_product = context.get("adProduct", "SPONSORED_PRODUCTS").lower() if context else "sponsored_products"
+        path = self.path
+        
         if ad_product == "sponsored_products":
-            self.method = "POST"
-            return "/sp/targets/list"
+            path = "/sp/targets/list"
         elif ad_product == "sponsored_brands":
-            self.method = "POST"
-            return "/sb/targets/list"
+            path = "/sb/targets/list"
         elif ad_product == "sponsored_display":
+            path = "/sd/targets"
             self.method = "GET"
-            return "/sd/targets"
-        return self.path
+        
+        logger.info(f"Using path: {path} for ad_product: {ad_product}")
+        return path
 
 
 class AdsStream(AmazonADsStream):

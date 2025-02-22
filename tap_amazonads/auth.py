@@ -150,7 +150,6 @@ class AmazonADsAuthenticator:
         }
         logger.info("Auth params generated successfully")
         return auth_params
-
     def get_auth_headers(self, context: dict | None = None) -> dict[str, Any]:
         """Get auth headers for the Amazon Ads API.
 
@@ -161,3 +160,50 @@ class AmazonADsAuthenticator:
             Auth headers dict.
         """
         return self.get_auth_params(context)
+
+class AmazonADsNonReportAuthenticator:
+    """Authenticator for non-report Amazon Ads endpoints."""
+
+    def __init__(self, config):
+        """Initialize authenticator."""
+        self._config = config
+        self._access_token = None
+        self._token_expires_at = None
+        
+    def __call__(self, request):
+        """Called by requests library to authenticate requests."""
+        auth_headers = self.get_auth_headers()
+        request.headers.update(auth_headers)
+        return request
+
+    @property
+    def access_token(self):
+        """Get the current access token."""
+        if not self._access_token or self._token_expired:
+            self.update_access_token()
+        return self._access_token
+
+    def update_access_token(self):
+        """Update the access token using the refresh token."""
+        token_response = requests.post(
+            "https://api.amazon.com/auth/o2/token",
+            data={
+                "grant_type": "refresh_token",
+                "refresh_token": self._config["refresh_token"],
+                "client_id": self._config["client_id"],
+                "client_secret": self._config["client_secret"],
+            },
+        )
+        token_response.raise_for_status()
+        self._access_token = token_response.json()["access_token"]
+        logger.info(f"After refresh, access token (first 20 chars): {self._access_token[:20]}")
+
+    def get_auth_headers(self, context: dict | None = None) -> dict[str, Any]:
+        """Get auth headers for the Amazon Ads API."""
+        return {
+            "Amazon-Advertising-API-ClientId": self._config["client_id"],
+            "Amazon-Advertising-API-Scope": self._config["profile_id"],
+            "Authorization": f"Bearer {self.access_token}",
+            "Content-Type": "application/vnd.sptargetingClause.v3+json",
+            "Accept": "application/vnd.sptargetingClause.v3+json"
+        }
