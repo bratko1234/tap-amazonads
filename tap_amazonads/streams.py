@@ -309,11 +309,8 @@ class TargetsStream(AmazonADsStream):
         context: dict | None,
         next_page_token: t.Any | None,
     ) -> dict | None:
-        """Prepare request payload.
-        
-        The API expects an empty JSON object as the request body.
-        """
-        return {}
+        """Prepare request payload."""
+        return {}  # Return empty dict as required by the API
 
     @property
     def http_headers(self) -> dict:
@@ -333,13 +330,8 @@ class TargetsStream(AmazonADsStream):
 
     def get_request_body(self, context: dict | None, next_page_token: t.Any | None) -> dict | None:
         """Return a dictionary to be sent in the request body."""
-        request_data = {
-            "startIndex": int(next_page_token) if next_page_token else 0,
-            "count": self.page_size,
-            "stateFilter": "enabled,paused,archived"
-        }
-        logger.info("Request body prepared: %s", request_data)
-        return request_data
+        # API expects an empty object for this endpoint
+        return {}
 
     def prepare_request(
         self, 
