@@ -296,27 +296,20 @@ class TargetsStream(AmazonADsStream):
     primary_keys: t.ClassVar[list[str]] = ["targetId"]
     replication_key = "lastUpdatedDateTime"
     schema_filepath = SCHEMAS_DIR / "targets.json"
-    #parent_stream_type = AdGroupsStream
     method = "POST"  # Default to POST for SP and SB
     records_jsonpath = "$.targetingClauses[*]"
     ignore_parent_replication_keys = True
     
     @property
-    def authenticator(self):
-        """Return a new authenticator object."""
-        return self._authenticator
-    
-    @property
     def http_headers(self) -> dict:
         """Return the http headers needed."""
-        headers = {
+        headers = super().http_headers  # Koristimo parent headers kao base
+        headers.update({
             "Content-Type": "application/vnd.sptargetingClause.v3+json",
             "Accept": "application/vnd.sptargetingClause.v3+json",
             "Amazon-Advertising-API-ClientId": self.config["client_id"],
             "Amazon-Advertising-API-Scope": self.config["profile_id"]
-        }
-        # Add auth headers
-        headers.update(self.authenticator.get_auth_headers())
+        })
         return headers
 
     def get_url_params(self, context: dict | None, next_page_token: t.Any | None) -> dict[str, t.Any]:
