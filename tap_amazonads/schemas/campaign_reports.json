@@ -159,7 +159,7 @@
     },
     "required": [
         "campaignId",
-        "date",
+        "startDate",
         "cost"
     ]
 } 
