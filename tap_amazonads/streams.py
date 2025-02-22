@@ -909,7 +909,7 @@ curl --location --request {prepared_request.method} '{prepared_request.url}' \\
                     "unitsSoldClicks14d"
                 ],
                 "reportTypeId": "spAdvertisedProduct",
-                "timeUnit": "SUMMARY",
+                "timeUnit": "DAILY",
                 "format": "GZIP_JSON"
             }
         }
@@ -1081,7 +1081,7 @@ curl --location --request {prepared_request.method} '{prepared_request.url}' \\
                     "unitsSoldClicks14d"
                 ],
                 "reportTypeId": "spPurchasedProduct",
-                "timeUnit": "SUMMARY",
+                "timeUnit": "DAILY",
                 "format": "GZIP_JSON"
             }
         }
@@ -1249,7 +1249,7 @@ curl --location --request {prepared_request.method} '{prepared_request.url}' \\
                     "startDate"
                 ],
                 "reportTypeId": "spGrossAndInvalids",
-                "timeUnit": "SUMMARY",
+                "timeUnit": "DAILY",
                 "format": "GZIP_JSON"
             }
         }
