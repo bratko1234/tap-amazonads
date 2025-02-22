@@ -78,13 +78,12 @@ class CampaignsStream(AmazonADsStream):
     """Campaigns stream."""
     
     name = "campaigns"
-    path = "/sp/campaigns/list"  # Reverting back to original path
+    path = "/sp/campaigns/list"
     primary_keys: t.ClassVar[list[str]] = ["campaignId"]
-    replication_key = None  # Removing replication key since lastUpdatedDateTime is not available
+    replication_key = None
     schema_filepath = SCHEMAS_DIR / "campaigns.json"
-    method = "POST"  # Default to POST for SP and SB
-    page_size = 100  # Default page size
-    records_jsonpath = "$.campaigns[*]"  # Updated to match actual response structure
+    method = "POST"
+    records_jsonpath = "$.campaigns[*]"
     
     @property
     def http_headers(self) -> dict:
@@ -92,10 +91,24 @@ class CampaignsStream(AmazonADsStream):
         headers = {
             "Content-Type": "application/vnd.spcampaign.v3+json",
             "Accept": "application/vnd.spcampaign.v3+json",
+            "Amazon-Advertising-API-ClientId": self.config["client_id"],
+            "Amazon-Advertising-API-Scope": self.config["profile_id"],
         }
-        if "user_agent" in self.config:
-            headers["User-Agent"] = self.config.get("user_agent")
+        if self.authenticator:
+            headers["Authorization"] = f"Bearer {self.authenticator.access_token}"
         return headers
+
+    def prepare_request_payload(
+        self,
+        context: dict | None,
+        next_page_token: t.Any | None,
+    ) -> dict | None:
+        """Prepare request payload."""
+        return {}  # Return empty dict as required by the API
+
+    def get_request_body(self, context: dict | None, next_page_token: t.Any | None) -> dict | None:
+        """Return a dictionary to be sent in the request body."""
+        return {}
 
     def get_url_params(self, context: dict | None, next_page_token: t.Any | None) -> dict[str, t.Any]:
         """Return a dictionary of values to be used in URL parameterization."""
@@ -200,12 +213,9 @@ class AdGroupsStream(AmazonADsStream):
     name = "ad_groups"
     path = "/sp/adGroups/list"
     primary_keys = ["adGroupId"]
-    replication_key = None  # Removing replication key since lastUpdatedDateTime is not available
+    replication_key = None
     records_jsonpath = "$.adGroups[*]"
-   # parent_stream_type = CampaignsStream
-    method = "POST"  # Default to POST for SP and SB
-    records_jsonpath = "$.adGroups[*]"  # Updated to match actual response structure
-    ignore_parent_replication_keys = True
+    method = "POST"
     schema_filepath = SCHEMAS_DIR / "ad_groups.json"
     
     @property
@@ -214,10 +224,24 @@ class AdGroupsStream(AmazonADsStream):
         headers = {
             "Content-Type": "application/vnd.spadGroup.v3+json",
             "Accept": "application/vnd.spadGroup.v3+json",
+            "Amazon-Advertising-API-ClientId": self.config["client_id"],
+            "Amazon-Advertising-API-Scope": self.config["profile_id"],
         }
-        if "user_agent" in self.config:
-            headers["User-Agent"] = self.config.get("user_agent")
+        if self.authenticator:
+            headers["Authorization"] = f"Bearer {self.authenticator.access_token}"
         return headers
+
+    def prepare_request_payload(
+        self,
+        context: dict | None,
+        next_page_token: t.Any | None,
+    ) -> dict | None:
+        """Prepare request payload."""
+        return {}  # Return empty dict as required by the API
+
+    def get_request_body(self, context: dict | None, next_page_token: t.Any | None) -> dict | None:
+        """Return a dictionary to be sent in the request body."""
+        return {}
 
     def get_url_params(self, context: dict | None, next_page_token: t.Any | None) -> dict[str, t.Any]:
         """Return a dictionary of values to be used in URL parameterization."""
@@ -226,17 +250,28 @@ class AdGroupsStream(AmazonADsStream):
             params["adProduct"] = context["adProduct"]
         return params
 
-    def get_request_body(self, context: dict | None, next_page_token: t.Any | None) -> dict | None:
-        """Return a dictionary to be sent in the request body."""
-        request_data = {
-            "startIndex": int(next_page_token) if next_page_token else 0,
-            "count": self.page_size,
-            "adProduct": "SPONSORED_PRODUCTS",  # Required field
-            "state": "enabled,paused,archived"  # Changed from stateFilter to state
-        }
-        if context:
-            request_data["campaignId"] = context["campaignId"]
-        return request_data
+    def get_starting_timestamp(self, context: dict | None) -> str:
+        """Return the starting timestamp for incremental sync."""
+        from datetime import datetime
+        start_date = self.get_starting_replication_key_value(context)
+        if start_date:
+            # If it's already a string in ISO format, return it
+            if isinstance(start_date, str):
+                return start_date
+            # If it's a datetime, convert to ISO format
+            if isinstance(start_date, datetime):
+                return start_date.isoformat()
+        # Default to config start_date or a fixed date much earlier
+        return self.config.get("start_date", "2023-01-01T00:00:00Z")
+
+    def get_ending_timestamp(self, context: dict | None) -> str | None:
+        """Return the ending timestamp for incremental sync."""
+        # For initial sync, don't set an end date to get all records
+        if not self.get_starting_replication_key_value(context):
+            return None
+        # For subsequent syncs, use current time as end date
+        from datetime import datetime, timezone
+        return datetime.now(timezone.utc).isoformat()
 
     def prepare_request(self, context: dict | None, next_page_token: t.Any | None) -> requests.PreparedRequest:
         """Prepare a request object for the REST API."""
@@ -390,28 +425,35 @@ class AdsStream(AmazonADsStream):
     name = "ads"
     path = "/sp/productAds/list"
     primary_keys = ["adId"]
-    replication_key = None  # Removing replication key since lastUpdatedDateTime is not available
+    replication_key = None
     records_jsonpath = "$.productAds[*]"
-    #parent_stream_type = AdGroupsStream
-    ignore_parent_replication_keys = True
-    schema_filepath = SCHEMAS_DIR / "ads.json"
     method = "POST"
-
-    headers = {
-        "Content-Type": "application/vnd.spproductAd.v3+json",
-        "Accept": "application/vnd.spproductAd.v3+json",
-    }
-
+    schema_filepath = SCHEMAS_DIR / "ads.json"
+    
     @property
     def http_headers(self) -> dict:
         """Return the http headers needed."""
         headers = {
             "Content-Type": "application/vnd.spproductAd.v3+json",
             "Accept": "application/vnd.spproductAd.v3+json",
+            "Amazon-Advertising-API-ClientId": self.config["client_id"],
+            "Amazon-Advertising-API-Scope": self.config["profile_id"],
         }
-        if "user_agent" in self.config:
-            headers["User-Agent"] = self.config.get("user_agent")
+        if self.authenticator:
+            headers["Authorization"] = f"Bearer {self.authenticator.access_token}"
         return headers
+
+    def prepare_request_payload(
+        self,
+        context: dict | None,
+        next_page_token: t.Any | None,
+    ) -> dict | None:
+        """Prepare request payload."""
+        return {}  # Return empty dict as required by the API
+
+    def get_request_body(self, context: dict | None, next_page_token: t.Any | None) -> dict | None:
+        """Return a dictionary to be sent in the request body."""
+        return {}
 
     def get_url_params(self, context: dict | None, next_page_token: t.Any | None) -> dict[str, t.Any]:
         """Return a dictionary of values to be used in URL parameterization."""
@@ -420,17 +462,28 @@ class AdsStream(AmazonADsStream):
             params["adProduct"] = context["adProduct"]
         return params
 
-    def get_request_body(self, context: dict | None, next_page_token: t.Any | None) -> dict | None:
-        """Return a dictionary to be sent in the request body."""
-        request_data = {
-            "startIndex": int(next_page_token) if next_page_token else 0,
-            "count": self.page_size,
-            "adProduct": "SPONSORED_PRODUCTS",  # Required field
-            "state": "enabled,paused,archived"  # Changed from stateFilter to state
-        }
-        if context:
-            request_data["adGroupId"] = context["adGroupId"]
-        return request_data
+    def get_starting_timestamp(self, context: dict | None) -> str:
+        """Return the starting timestamp for incremental sync."""
+        from datetime import datetime
+        start_date = self.get_starting_replication_key_value(context)
+        if start_date:
+            # If it's already a string in ISO format, return it
+            if isinstance(start_date, str):
+                return start_date
+            # If it's a datetime, convert to ISO format
+            if isinstance(start_date, datetime):
+                return start_date.isoformat()
+        # Default to config start_date or a fixed date much earlier
+        return self.config.get("start_date", "2023-01-01T00:00:00Z")
+
+    def get_ending_timestamp(self, context: dict | None) -> str | None:
+        """Return the ending timestamp for incremental sync."""
+        # For initial sync, don't set an end date to get all records
+        if not self.get_starting_replication_key_value(context):
+            return None
+        # For subsequent syncs, use current time as end date
+        from datetime import datetime, timezone
+        return datetime.now(timezone.utc).isoformat()
 
     def prepare_request(self, context: dict | None, next_page_token: t.Any | None) -> requests.PreparedRequest:
         """Prepare a request object for the REST API."""
