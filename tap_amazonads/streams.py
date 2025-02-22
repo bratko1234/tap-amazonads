@@ -78,11 +78,10 @@ class BaseReportStream(AmazonADsStream):
         report_id = report_info["reportId"]
         max_attempts = 10
         attempt = 0
-        initial_wait = 600  # Povećano na 10 minuta
+        initial_wait = 360  # Povećano na 6 minuta
 
         while attempt < max_attempts:
-            jitter = random.uniform(0, 5)
-            wait_time = initial_wait * (2 ** attempt) + jitter
+            wait_time = 60
             
             logger.info(f"Waiting {wait_time} seconds before checking report status...")
             time.sleep(wait_time)
