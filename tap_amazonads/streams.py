@@ -48,7 +48,7 @@ class BaseReportStream(AmazonADsStream):
         report_id = report_info["reportId"]
         max_attempts = 10
         attempt = 0
-        initial_wait = 30  # Početno vrijeme čekanja između pokušaja
+        initial_wait = 120  # Početno vrijeme čekanja između pokušaja
 
         while attempt < max_attempts:
             jitter = random.uniform(0, 5)
