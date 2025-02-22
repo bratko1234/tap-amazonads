@@ -302,6 +302,11 @@ class TargetsStream(AmazonADsStream):
     ignore_parent_replication_keys = True
     
     @property
+    def authenticator(self):
+        """Return a new authenticator object."""
+        return self._authenticator
+    
+    @property
     def http_headers(self) -> dict:
         """Return the http headers needed."""
         headers = {
@@ -310,8 +315,8 @@ class TargetsStream(AmazonADsStream):
             "Amazon-Advertising-API-ClientId": self.config["client_id"],
             "Amazon-Advertising-API-Scope": self.config["profile_id"]
         }
-        if "user_agent" in self.config:
-            headers["User-Agent"] = self.config.get("user_agent")
+        # Add auth headers
+        headers.update(self.authenticator.get_auth_headers())
         return headers
 
     def get_url_params(self, context: dict | None, next_page_token: t.Any | None) -> dict[str, t.Any]:
