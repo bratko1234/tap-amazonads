@@ -123,6 +123,29 @@ class BaseReportStream(AmazonADsStream):
         logger.warning(error_msg)
         raise Exception(error_msg)
 
+    def get_report_dates(self) -> tuple[str, str]:
+        """Return start and end dates for report.
+        
+        Returns:
+            Tuple containing start_date and end_date in YYYY-MM-DD format
+        """
+        from datetime import datetime, timezone
+        
+        # Get end_date (current date in UTC)
+        end_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        
+        # Get start_date from config or use end_date if not specified
+        start_date = self.config.get("start_date")
+        if start_date:
+            # If start_date is datetime object, convert to string
+            if isinstance(start_date, datetime):
+                start_date = start_date.strftime("%Y-%m-%d")
+        else:
+            start_date = end_date
+            
+        logger.info(f"Report date range: {start_date} to {end_date}")
+        return start_date, end_date
+
 class CampaignsStream(AmazonADsStream):
     """Campaigns stream."""
     
@@ -671,10 +694,15 @@ curl --location --request {prepared_request.method} '{prepared_request.url}' \\
         url = self.get_url(context)
         headers = self.http_headers
         
+        from datetime import datetime
+        
+        start_date = self.config.get("start_date", "2025-02-10")  # Fallback na default ako nema start_date
+        end_date = datetime.now().strftime("%Y-%m-%d")  # Današnji datum u formatu YYYY-MM-DD
+        
         body = {
             "name": "SP search term report",
-            "startDate": "2025-02-10",
-            "endDate": "2025-02-10",
+            "startDate": start_date,
+            "endDate": end_date,
             "configuration": {
                 "adProduct": "SPONSORED_PRODUCTS",
                 "groupBy": ["searchTerm"],
@@ -837,10 +865,15 @@ curl --location --request {prepared_request.method} '{prepared_request.url}' \\
         url = self.get_url(context)
         headers = self.http_headers
         
+        from datetime import datetime
+        
+        start_date = self.config.get("start_date", "2025-02-10")  # Fallback na default ako nema start_date
+        end_date = datetime.now().strftime("%Y-%m-%d")  # Današnji datum u formatu YYYY-MM-DD
+        
         body = {
             "name": "SP advertised product report",
-            "startDate": "2025-02-10",
-            "endDate": "2025-02-10",
+            "startDate": start_date,
+            "endDate": end_date,
             "configuration": {
                 "adProduct": "SPONSORED_PRODUCTS",
                 "groupBy": ["advertiser"],
@@ -992,10 +1025,15 @@ curl --location --request {prepared_request.method} '{prepared_request.url}' \\
         url = self.get_url(context)
         headers = self.http_headers
         
+        from datetime import datetime
+        
+        start_date = self.config.get("start_date", "2025-02-10")  # Fallback na default ako nema start_date
+        end_date = datetime.now().strftime("%Y-%m-%d")  # Današnji datum u formatu YYYY-MM-DD
+        
         body = {
             "name": "SP purchased product report",
-            "startDate": "2025-02-10",
-            "endDate": "2025-02-10",
+            "startDate": start_date,
+            "endDate": end_date,
             "configuration": {
                 "adProduct": "SPONSORED_PRODUCTS",
                 "groupBy": ["asin"],
@@ -1148,10 +1186,15 @@ curl --location --request {prepared_request.method} '{prepared_request.url}' \\
         url = self.get_url(context)
         headers = self.http_headers
         
+        from datetime import datetime
+        
+        start_date = self.config.get("start_date", "2025-02-10")  # Fallback na default ako nema start_date
+        end_date = datetime.now().strftime("%Y-%m-%d")  # Današnji datum u formatu YYYY-MM-DD
+        
         body = {
             "name": "SP Gross and Invalid Traffic",
-            "startDate": "2025-02-10",
-            "endDate": "2025-02-10",
+            "startDate": start_date,
+            "endDate": end_date,
             "configuration": {
                 "adProduct": "SPONSORED_PRODUCTS",
                 "groupBy": ["campaign"],
@@ -1339,10 +1382,15 @@ class CampaignReportStream(BaseReportStream):
         url = self.get_url(context)
         headers = self.http_headers
         
+        from datetime import datetime
+        
+        start_date = self.config.get("start_date", "2025-02-10")  # Fallback na default ako nema start_date
+        end_date = datetime.now().strftime("%Y-%m-%d")  # Današnji datum u formatu YYYY-MM-DD
+        
         body = {
             "name": "SP Campaign Report",
-            "startDate": "2025-02-10",
-            "endDate": "2025-02-10",
+            "startDate": start_date,
+            "endDate": end_date,
             "configuration": {
                 "adProduct": "SPONSORED_PRODUCTS",
                 "groupBy": ["campaign"],

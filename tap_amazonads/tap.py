@@ -59,7 +59,7 @@ class TapAmazonADs(Tap):
         th.Property(
             "start_date",
             th.DateTimeType,
-            description="The earliest record date to sync",
+            description="The earliest record date to sync (format: YYYY-MM-DD)",
         ),
     ).to_dict()
 
