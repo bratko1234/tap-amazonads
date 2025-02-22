@@ -309,8 +309,11 @@ class TargetsStream(AmazonADsStream):
         context: dict | None,
         next_page_token: t.Any | None,
     ) -> dict | None:
-        """Prepare request payload."""
-        return {}  # Vraćamo prazan objekat umesto parametara
+        """Prepare request payload.
+        
+        The API expects an empty JSON object as the request body.
+        """
+        return {}
 
     @property
     def http_headers(self) -> dict:
