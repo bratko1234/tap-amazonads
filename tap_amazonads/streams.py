@@ -78,10 +78,30 @@ class BaseReportStream(AmazonADsStream):
         report_id = report_info["reportId"]
         max_attempts = 10
         attempt = 0
-        initial_wait = 360  # Povećano na 6 minuta
+        initial_wait = 360  # 6 minuta
 
+        # Prvi pokušaj - čekamo 6 minuta
+        if attempt == 0:
+            wait_time = initial_wait
+            logger.info(f"Initial wait of {wait_time} seconds before first check...")
+            time.sleep(wait_time)
+            
+            report_status = self.get_report_status(report_id)
+            logger.info(f"Report status: {report_status['status']}")
+            
+            if report_status["status"] == "COMPLETED":
+                logger.info(f"Report completed! URL: {report_status['url']}")
+                return self.download_and_process_report(report_status['url'])
+            elif report_status["status"] == "FAILED":
+                error_msg = f"Report generation failed: {report_status.get('failureReason')}"
+                logger.error(error_msg)
+                raise Exception(error_msg)
+            
+            attempt += 1
+
+        # Naredni pokušaji - čekamo po minut
         while attempt < max_attempts:
-            wait_time = 60
+            wait_time = 60  # 1 minut za sve ostale pokušaje
             
             logger.info(f"Waiting {wait_time} seconds before checking report status...")
             time.sleep(wait_time)
@@ -92,7 +112,6 @@ class BaseReportStream(AmazonADsStream):
             if report_status["status"] == "COMPLETED":
                 logger.info(f"Report completed! URL: {report_status['url']}")
                 return self.download_and_process_report(report_status['url'])
-                
             elif report_status["status"] == "FAILED":
                 error_msg = f"Report generation failed: {report_status.get('failureReason')}"
                 logger.error(error_msg)
