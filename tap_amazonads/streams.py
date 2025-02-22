@@ -1311,8 +1311,8 @@ class CampaignReportStream(BaseReportStream):
     
     name = "campaign_reports"
     path = "/reporting/reports"
-    primary_keys = ["campaignId", "startDate"]
-    replication_key = "startDate"
+    primary_keys = ["campaignId", "date"]
+    replication_key = "date"
     schema_filepath = SCHEMAS_DIR / "campaign_reports.json"
     method = "POST"
     records_jsonpath = "$.reports[*]"
@@ -1454,8 +1454,7 @@ class CampaignReportStream(BaseReportStream):
                     "sales14d",
                     "unitsSoldClicks14d",
                     "topOfSearchImpressionShare",
-                    "startDate",
-                    "endDate"
+                    "date"
                 ],
                 "reportTypeId": "spCampaigns",
                 "timeUnit": "DAILY",
