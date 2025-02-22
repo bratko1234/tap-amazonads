@@ -4,17 +4,7 @@
         "date": {
             "type": ["string", "null"],
             "format": "date",
-            "description": "The date of the report data"
-        },
-        "startDate": {
-            "type": ["string", "null"],
-            "format": "date",
-            "description": "The start date of the report period"
-        },
-        "endDate": {
-            "type": ["string", "null"],
-            "format": "date",
-            "description": "The end date of the report period"
+            "description": "The date of the report"
         },
         "campaignName": {
             "type": ["string", "null"],
@@ -41,19 +31,6 @@
             "type": ["string", "null"],
             "description": "The currency code for the campaign budget"
         },
-        "adGroupId": {
-            "type": ["string", "null"],
-            "description": "The unique identifier of the ad group (when grouped by ad group)"
-        },
-        "adGroupName": {
-            "type": ["string", "null"],
-            "description": "The name of the ad group (when grouped by ad group)"
-        },
-        "adStatus": {
-            "type": ["string", "null"],
-            "enum": ["ENABLED", "PAUSED", "ARCHIVED"],
-            "description": "The status of the ad group (when grouped by ad group)"
-        },
         "impressions": {
             "type": ["integer", "null"],
             "description": "Number of times your ads were shown"
@@ -74,92 +51,26 @@
             "type": ["number", "null"],
             "description": "Click-through rate (CTR)"
         },
-        "purchases1d": {
-            "type": ["integer", "null"],
-            "description": "Number of purchases within 1 day of ad interaction"
-        },
-        "purchases7d": {
-            "type": ["integer", "null"],
-            "description": "Number of purchases within 7 days of ad interaction"
-        },
         "purchases14d": {
             "type": ["integer", "null"],
             "description": "Number of purchases within 14 days of ad interaction"
-        },
-        "purchases30d": {
-            "type": ["integer", "null"],
-            "description": "Number of purchases within 30 days of ad interaction"
-        },
-        "sales1d": {
-            "type": ["number", "null"],
-            "description": "Sales value within 1 day of ad interaction"
-        },
-        "sales7d": {
-            "type": ["number", "null"],
-            "description": "Sales value within 7 days of ad interaction"
         },
         "sales14d": {
             "type": ["number", "null"],
             "description": "Sales value within 14 days of ad interaction"
         },
-        "sales30d": {
-            "type": ["number", "null"],
-            "description": "Sales value within 30 days of ad interaction"
-        },
-        "unitsSoldClicks1d": {
-            "type": ["integer", "null"],
-            "description": "Units sold within 1 day of clicks"
-        },
-        "unitsSoldClicks7d": {
-            "type": ["integer", "null"],
-            "description": "Units sold within 7 days of clicks"
-        },
         "unitsSoldClicks14d": {
             "type": ["integer", "null"],
             "description": "Units sold within 14 days of clicks"
         },
-        "unitsSoldClicks30d": {
-            "type": ["integer", "null"],
-            "description": "Units sold within 30 days of clicks"
-        },
         "topOfSearchImpressionShare": {
             "type": ["number", "null"],
             "description": "Share of impressions in top of search results"
-        },
-        "addToList": {
-            "type": ["integer", "null"],
-            "description": "Number of add to list actions"
-        },
-        "qualifiedBorrows": {
-            "type": ["integer", "null"],
-            "description": "Number of qualified borrows"
-        },
-        "royaltyQualifiedBorrows": {
-            "type": ["integer", "null"],
-            "description": "Number of royalty qualified borrows"
-        },
-        "campaignBiddingStrategy": {
-            "type": ["string", "null"],
-            "description": "The bidding strategy used for the campaign"
-        },
-        "spend": {
-            "type": ["number", "null"],
-            "description": "Total spend for the campaign/ad group"
-        },
-        "reportTypeId": {
-            "type": ["string", "null"],
-            "enum": ["spCampaigns", "sbCampaigns", "sdCampaigns"],
-            "description": "The type of report"
-        },
-        "timeUnit": {
-            "type": ["string", "null"],
-            "enum": ["SUMMARY", "DAILY"],
-            "description": "The time unit for the report data"
         }
     },
     "required": [
         "campaignId",
-        "startDate",
+        "date",
         "cost"
     ]
 } 
