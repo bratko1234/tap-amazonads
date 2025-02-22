@@ -13,6 +13,7 @@ import random
 import uuid
 import gzip
 import io
+from datetime import datetime, timezone
 
 from tap_amazonads.client import AmazonADsStream
 from tap_amazonads.auth import AmazonADsAuthenticator, AmazonADsNonReportAuthenticator
@@ -76,7 +77,7 @@ class BaseReportStream(AmazonADsStream):
     def process_report(self, report_info: dict) -> t.Iterable[dict]:
         """Process report after initial creation."""
         report_id = report_info["reportId"]
-        max_attempts = 10
+        max_attempts = 25
         attempt = 0
         initial_wait = 360  # 6 minuta
 
@@ -129,8 +130,6 @@ class BaseReportStream(AmazonADsStream):
         Returns:
             Tuple containing start_date and end_date in YYYY-MM-DD format
         """
-        from datetime import datetime, timezone
-        
         # Get end_date (current date in UTC)
         end_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
         
@@ -696,8 +695,17 @@ curl --location --request {prepared_request.method} '{prepared_request.url}' \\
         
         from datetime import datetime
         
-        start_date = self.config.get("start_date", "2025-02-10")  # Fallback na default ako nema start_date
-        end_date = datetime.now().strftime("%Y-%m-%d")  # Današnji datum u formatu YYYY-MM-DD
+        start_date = self.config.get("start_date")
+        if isinstance(start_date, datetime):
+            start_date = start_date.strftime("%Y-%m-%d")
+        elif not start_date:
+            start_date = "2025-02-10"  # Default ako nema start_date
+            
+        end_date = self.config.get("end_date")
+        if isinstance(end_date, datetime):
+            end_date = end_date.strftime("%Y-%m-%d")
+        elif not end_date:
+            end_date = datetime.now().strftime("%Y-%m-%d")
         
         body = {
             "name": "SP search term report",
@@ -867,8 +875,17 @@ curl --location --request {prepared_request.method} '{prepared_request.url}' \\
         
         from datetime import datetime
         
-        start_date = self.config.get("start_date", "2025-02-10")  # Fallback na default ako nema start_date
-        end_date = datetime.now().strftime("%Y-%m-%d")  # Današnji datum u formatu YYYY-MM-DD
+        start_date = self.config.get("start_date")
+        if isinstance(start_date, datetime):
+            start_date = start_date.strftime("%Y-%m-%d")
+        elif not start_date:
+            start_date = "2025-02-10"  # Default ako nema start_date
+            
+        end_date = self.config.get("end_date")
+        if isinstance(end_date, datetime):
+            end_date = end_date.strftime("%Y-%m-%d")
+        elif not end_date:
+            end_date = datetime.now().strftime("%Y-%m-%d")
         
         body = {
             "name": "SP advertised product report",
@@ -1027,8 +1044,17 @@ curl --location --request {prepared_request.method} '{prepared_request.url}' \\
         
         from datetime import datetime
         
-        start_date = self.config.get("start_date", "2025-02-10")  # Fallback na default ako nema start_date
-        end_date = datetime.now().strftime("%Y-%m-%d")  # Današnji datum u formatu YYYY-MM-DD
+        start_date = self.config.get("start_date")
+        if isinstance(start_date, datetime):
+            start_date = start_date.strftime("%Y-%m-%d")
+        elif not start_date:
+            start_date = "2025-02-10"  # Default ako nema start_date
+            
+        end_date = self.config.get("end_date")
+        if isinstance(end_date, datetime):
+            end_date = end_date.strftime("%Y-%m-%d")
+        elif not end_date:
+            end_date = datetime.now().strftime("%Y-%m-%d")
         
         body = {
             "name": "SP purchased product report",
@@ -1188,8 +1214,17 @@ curl --location --request {prepared_request.method} '{prepared_request.url}' \\
         
         from datetime import datetime
         
-        start_date = self.config.get("start_date", "2025-02-10")  # Fallback na default ako nema start_date
-        end_date = datetime.now().strftime("%Y-%m-%d")  # Današnji datum u formatu YYYY-MM-DD
+        start_date = self.config.get("start_date")
+        if isinstance(start_date, datetime):
+            start_date = start_date.strftime("%Y-%m-%d")
+        elif not start_date:
+            start_date = "2025-02-10"  # Default ako nema start_date
+            
+        end_date = self.config.get("end_date")
+        if isinstance(end_date, datetime):
+            end_date = end_date.strftime("%Y-%m-%d")
+        elif not end_date:
+            end_date = datetime.now().strftime("%Y-%m-%d")
         
         body = {
             "name": "SP Gross and Invalid Traffic",
@@ -1384,8 +1419,17 @@ class CampaignReportStream(BaseReportStream):
         
         from datetime import datetime
         
-        start_date = self.config.get("start_date", "2025-02-10")  # Fallback na default ako nema start_date
-        end_date = datetime.now().strftime("%Y-%m-%d")  # Današnji datum u formatu YYYY-MM-DD
+        start_date = self.config.get("start_date")
+        if isinstance(start_date, datetime):
+            start_date = start_date.strftime("%Y-%m-%d")
+        elif not start_date:
+            start_date = "2025-02-10"  # Default ako nema start_date
+            
+        end_date = self.config.get("end_date")
+        if isinstance(end_date, datetime):
+            end_date = end_date.strftime("%Y-%m-%d")
+        elif not end_date:
+            end_date = datetime.now().strftime("%Y-%m-%d")
         
         body = {
             "name": "SP Campaign Report",
@@ -1414,7 +1458,7 @@ class CampaignReportStream(BaseReportStream):
                     "endDate"
                 ],
                 "reportTypeId": "spCampaigns",
-                "timeUnit": "SUMMARY",
+                "timeUnit": "DAILY",
                 "format": "GZIP_JSON"
             }
         }
