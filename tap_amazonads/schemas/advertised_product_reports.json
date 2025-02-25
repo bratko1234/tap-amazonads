@@ -4,7 +4,7 @@
         "date": {
             "type": ["string", "null"],
             "format": "date",
-            "description": "The date of the report data"
+            "description": "The date of the report"
         },
         "campaignId": {
             "type": ["string", "null"],
@@ -56,8 +56,8 @@
         }
     },
     "required": [
-        "date",
         "campaignId",
+        "date",
         "advertisedAsin"
     ]
 }

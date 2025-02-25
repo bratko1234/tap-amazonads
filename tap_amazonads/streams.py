@@ -611,8 +611,8 @@ class SearchTermReportStream(BaseReportStream):
     
     name = "search_term_reports"
     path = "/reporting/reports"
-    primary_keys: t.ClassVar[list[str]] = ["reportId"]
-    replication_key = None
+    primary_keys = ["campaignId", "date"]
+    replication_key = "date"
     schema_filepath = SCHEMAS_DIR / "search_term_reports.json"
     method = "POST"
     
@@ -893,20 +893,18 @@ curl --location --request {prepared_request.method} '{prepared_request.url}' \\
             "endDate": end_date,
             "configuration": {
                 "adProduct": "SPONSORED_PRODUCTS",
-                "groupBy": ["advertiser"],
+                "groupBy": ["advertiser", "campaign", "advertised_asin"],
                 "columns": [
                     "campaignId",
                     "campaignName",
-                    "adGroupId",
-                    "adGroupName",
                     "advertisedAsin",
-                    "advertisedSku",
                     "impressions",
                     "clicks",
                     "cost",
+                    "date",
                     "purchases14d",
-                    "sales14d",
-                    "unitsSoldClicks14d"
+                    "unitsSoldClicks14d",
+                    "sales14d"
                 ],
                 "reportTypeId": "spAdvertisedProduct",
                 "timeUnit": "DAILY",
