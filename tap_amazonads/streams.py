@@ -77,7 +77,7 @@ class BaseReportStream(AmazonADsStream):
     def process_report(self, report_info: dict) -> t.Iterable[dict]:
         """Process report after initial creation."""
         report_id = report_info["reportId"]
-        max_attempts = 45
+        max_attempts = 100
         attempt = 0
         initial_wait = 360  # 6 minuta
 
