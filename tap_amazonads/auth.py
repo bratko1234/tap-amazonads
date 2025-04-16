@@ -6,7 +6,7 @@ from singer_sdk.authenticators import OAuthAuthenticator, SingletonMeta
 from typing import Any
 import logging
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -51,26 +51,31 @@ class AmazonADsAuthenticator:
         return self._access_token
 
     def refresh_access_token(self):
-        """Refresh access token."""
+        """Refresh the access token using the refresh token."""
         url = "https://api.amazon.com/auth/o2/token"
         data = {
             "grant_type": "refresh_token",
             "refresh_token": self._config["refresh_token"],
             "client_id": self._config["client_id"],
-            "client_secret": self._config["client_secret"],
+            "client_secret": self._config["client_secret"]
         }
         headers = {
-            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+            "Content-Type": "application/x-www-form-urlencoded"
         }
         
+        logger.info("Refreshing access token...")
         response = requests.post(url, data=data, headers=headers)
+        
         if response.status_code != 200:
             raise Exception(f"Failed to refresh token: {response.text}")
         
-        response_json = response.json()
-        self._access_token = response_json["access_token"]
-        self._token_expiry = datetime.now() + timedelta(seconds=response_json["expires_in"] - 300)  # 5 min buffer
+        token_data = response.json()
+        self._access_token = token_data["access_token"]
+        self._token_expiry = datetime.now(timezone.utc) + timedelta(seconds=token_data["expires_in"])
         
+        logger.info(f"Successfully refreshed access token. Expires in {token_data['expires_in']} seconds")
+        return self._access_token
+
     @classmethod
     def create_for_stream(cls, stream):
         """Create a new authenticator for the given stream.
