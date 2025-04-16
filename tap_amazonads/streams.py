@@ -87,6 +87,9 @@ class BaseReportStream(AmazonADsStream):
             logger.info(f"Initial wait of {wait_time} seconds before first check...")
             time.sleep(wait_time)
             
+            # Provjera i osvježavanje tokena prije API poziva
+            self._refresh_token_if_needed()
+            
             report_status = self.get_report_status(report_id)
             logger.info(f"Report status: {report_status['status']}")
             
@@ -107,6 +110,9 @@ class BaseReportStream(AmazonADsStream):
             logger.info(f"Waiting {wait_time} seconds before checking report status...")
             time.sleep(wait_time)
             
+            # Provjera i osvježavanje tokena prije svakog API poziva
+            self._refresh_token_if_needed()
+            
             report_status = self.get_report_status(report_id)
             logger.info(f"Report status: {report_status['status']}")
             
@@ -123,6 +129,22 @@ class BaseReportStream(AmazonADsStream):
         error_msg = f"Reached maximum attempts waiting for report. Last status: {report_status['status']}"
         logger.warning(error_msg)
         raise Exception(error_msg)
+
+    def _refresh_token_if_needed(self):
+        """Check and refresh token if it's close to expiration."""
+        if not hasattr(self.authenticator, '_token_expiry'):
+            # Ako nema _token_expiry, osvježi token
+            logger.info("No token expiry found, refreshing token...")
+            self.authenticator.refresh_access_token()
+            return
+
+        from datetime import datetime, timezone
+        now = datetime.now(timezone.utc)
+        
+        # Ako je token blizu isteka (manje od 5 minuta), osvježi ga
+        if (self.authenticator._token_expiry - now).total_seconds() < 300:
+            logger.info("Token is about to expire, refreshing...")
+            self.authenticator.refresh_access_token()
 
     def get_report_dates(self) -> tuple[str, str]:
         """Return start and end dates for report.
