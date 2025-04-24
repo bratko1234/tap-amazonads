@@ -77,7 +77,7 @@ class BaseReportStream(AmazonADsStream):
     def process_report(self, report_info: dict) -> t.Iterable[dict]:
         """Process report after initial creation."""
         report_id = report_info["reportId"]
-        max_attempts = 100
+        max_attempts = 200
         attempt = 0
         initial_wait = 360  # 6 minuta
 
@@ -1457,14 +1457,18 @@ class CampaignReportStream(BaseReportStream):
             "endDate": end_date,
             "configuration": {
                 "adProduct": "SPONSORED_PRODUCTS",
-                "groupBy": ["campaign"],
+                "groupBy": ["campaign","adGroup"],
                 "columns": [
                     "campaignName",
                     "campaignId",
+                    "adGroupName",
+                    "adGroupId",
+                    "adStatus",
                     "campaignStatus",
                     "campaignBudgetAmount",
                     "campaignBudgetType",
                     "campaignBudgetCurrencyCode",
+                    "campaignBiddingStrategy",
                     "impressions",
                     "clicks",
                     "cost",
@@ -1473,7 +1477,6 @@ class CampaignReportStream(BaseReportStream):
                     "purchases14d",
                     "sales14d",
                     "unitsSoldClicks14d",
-                    "topOfSearchImpressionShare",
                     "date"
                 ],
                 "reportTypeId": "spCampaigns",
