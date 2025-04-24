@@ -14,6 +14,19 @@
             "type": ["string", "null"],
             "description": "The unique identifier of the campaign"
         },
+        "adGroupName": {
+            "type": ["string", "null"],
+            "description": "The name of the ad group"
+        },
+        "adGroupId": {
+            "type": ["string", "null"],
+            "description": "The unique identifier of the ad group"
+        },
+        "adStatus": {
+            "type": ["string", "null"],
+            "enum": ["ENABLED", "PAUSED", "ARCHIVED"],
+            "description": "The status of the ad group"
+        },
         "campaignStatus": {
             "type": ["string", "null"],
             "enum": ["ENABLED", "PAUSED", "ARCHIVED"],
@@ -30,6 +43,10 @@
         "campaignBudgetCurrencyCode": {
             "type": ["string", "null"],
             "description": "The currency code for the campaign budget"
+        },
+        "campaignBiddingStrategy": {
+            "type": ["string", "null"],
+            "description": "The bidding strategy for the campaign"
         },
         "impressions": {
             "type": ["integer", "null"],
@@ -73,4 +90,4 @@
         "date",
         "cost"
     ]
-} 
+}
